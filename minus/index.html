@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>con.ga/minus</title>
+  <style>
+    :root {
+      --bg: #12131C;
+      --surface: #1B1D2A;
+      --raised: #232638;
+      --line: #2C3045;
+      --text: #ECEEF8;
+      --mute: #8A90AB;
+      --accent: #8C9BFF;
+      --warm: #FF8F70;
+      --ok: #5EE0B0;
+      --amber: #F5C26B;
+      --r: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 14px 28px;
+      background: rgba(18, 19, 28, 0.88);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin-right: auto;
+    }
+    .mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 99px;
+      background: var(--accent);
+      display: grid;
+      place-items: center;
+    }
+    .mark::after {
+      content: "";
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--bg);
+    }
+    .dev { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--mute); }
+    select, button { font: inherit; color: var(--text); }
+    select {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      min-width: 180px;
+      max-width: 240px;
+    }
+    button { cursor: pointer; }
+    .ghost { background: none; border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; }
+    .ghost:hover, .seg button:hover { background: var(--raised); }
+    #gateInfo.open { color: var(--ok); }
+    .load { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--mute); }
+    .load .bar { width: 72px; height: 6px; border-radius: 3px; background: var(--raised); overflow: hidden; }
+    #dsp-fill { display: block; height: 100%; width: 0; background: var(--ok); transition: width .2s; }
+    .load b { color: var(--text); font-weight: 600; min-width: 42px; }
+    .go { background: var(--accent); color: #12131C; border: 0; border-radius: 999px; padding: 10px 26px; font-weight: 700; }
+    .go.live { background: var(--raised); color: var(--text); box-shadow: inset 0 0 0 1px var(--warm); }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    main { max-width: 1280px; margin: 0 auto; padding: 24px 28px 48px; display: grid; gap: 24px; }
+    .panel, .chs { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; }
+    .ph, .ch-h { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: 15px; font-weight: 650; }
+    #selName, #count { color: var(--mute); font-weight: 500; }
+    .legend { margin-left: auto; display: flex; gap: 16px; font-size: 12px; color: var(--mute); }
+    .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    #spectrum { width: 100%; height: 190px; display: block; background: var(--bg); border-radius: 12px; }
+    .ch-h #count { margin-right: auto; }
+    .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .seg button { background: none; border: 0; padding: 7px 14px; font-size: 13px; }
+    .seg button.act { background: var(--raised); color: var(--accent); }
+    .seg button + button { border-left: 1px solid var(--line); }
+    #strips { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px; }
+    .empty { grid-column: 1 / -1; margin: 24px 0; color: var(--mute); text-align: center; }
+    .strip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 6px 12px;
+      background: var(--raised);
+      border: 1px solid transparent;
+      border-radius: 14px;
+      transition: opacity .2s, border-color .2s;
+    }
+    .strip:not(.enabled) { opacity: .5; }
+    .strip.sel { border-color: var(--accent); }
+    .strip small { font-size: 11px; color: var(--mute); }
+    .strip.enabled small { color: var(--accent); }
+    .n { background: none; border: 0; font-weight: 650; font-size: 13px; padding: 2px 4px; border-radius: 6px; }
+    .vm { display: flex; gap: 5px; height: 120px; }
+    .t { position: relative; width: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+    .t i { position: absolute; inset: 0; transform: scaleY(0); will-change: transform; }
+    .t.in i { background: var(--accent); transform-origin: bottom; }
+    .t.gr i { background: var(--warm); transform-origin: top; }
+    .sw { position: relative; width: 42px; height: 24px; border-radius: 999px; border: 0; background: var(--line); transition: background .2s; }
+    .sw span { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .sw[aria-checked="true"] { background: var(--accent); }
+    .sw[aria-checked="true"] span { transform: translateX(18px); }
+    details { color: var(--mute); font-size: 12px; }
+    summary { cursor: pointer; margin-bottom: 8px; }
+    #log {
+      max-height: 140px;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 11px;
+    }
+    @media(prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    @media(max-width: 640px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      select { min-width: 0; width: 100%; max-width: none; }
+      .dev, label { width: 100%; }
+    }
+
+    .hw { font-size: 11px; color: var(--mute); max-width: 360px; }
+    .hw.warn { color: var(--amber); }
+    #learnInfo.on { color: var(--accent); }
+    .strip.shed { border-color: var(--amber); }
+    .guard { color: var(--mute); font-size: 11px; }
+    .guard.act { color: var(--amber); }
+    #blocker { display: none; }
+    .blocked header, .blocked main { display: none; }
+    .blocked #blocker { display: grid; min-height: 100vh; place-items: center; padding: 24px; }
+    #blocker .card { max-width: 440px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 28px; text-align: center; }
+    #blocker h1 { margin: 0 0 10px; font-size: 20px; }
+    #blocker p { margin: 0; color: var(--mute); }
+  </style>
+</head>
+<body>
+  <div id="blocker" role="alert"><div class="card"><h1 id="blockTitle"></h1><p id="blockMsg"></p></div></div>
+  <header>
+    <div class="brand"><span class="mark"></span>con.ga/minus</div>
+    <div class="dev">
+      <label>Mixer input<select id="selIn"></select></label>
+      <label>Return to mixer<select id="selOut"></select></label>
+      <button id="btnScan" class="ghost">Scan devices</button>
+      <button id="btnGuard" style="display: none;" class="ghost" title="Automatically freezes parts of the DSP when the audio thread nears overload">Load guard: On</button>
+    </div>
+    <div class="load">DSP <div class="bar"><i id="dsp-fill"></i></div><b id="dsp-val">0.0%</b><span id="guardInfo" class="guard"></span></div>
+    <div class="hw" id="hwInfo"></div>
+    <div class="seg" role="group" aria-label="Output source" style="display:none;">
+      <button id="btnMask" class="act" title="Raw audio shaped by the predicted mask">Raw + mask</button>
+      <button id="btnLegacy" title="Original processed chain">Legacy</button>
+    </div>
+    <button id="btnStart" class="go">Start</button>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="ph">
+        <h2>Signal <span id="selName">Ch 1</span> <span id="lagInfo" style="font-size:12px;color:var(--mute);font-weight:400"></span> <span id="gateInfo" style="font-size:12px;color:var(--mute);font-weight:400"></span> <span id="learnInfo" style="font-size:12px;color:var(--mute);font-weight:400"></span></h2>
+        <div class="legend">
+          <span><i style="background:#8A90AB"></i>Input</span>
+          <span><i style="background:#8C9BFF"></i>Clean</span>
+          <span><i style="background:#FF8F70"></i>Removed</span>
+        </div>
+      </div>
+      <canvas id="spectrum"></canvas>
+    </section>
+
+    <section class="chs">
+      <div class="ch-h">
+        <h2>Channels</h2><span id="count"></span>
+        <div class="seg"><button id="btnAll">Process all</button><button id="btnNone">Bypass all</button></div>
+      </div>
+      <div id="strips"><p class="empty">Connect your mixer over USB, choose it above, then press Start.</p></div>
+    </section>
+
+    <details><summary>Activity log</summary><div id="log"></div></details>
+  </main>
+
+  <script>
+    let rawAudioCtx, rawStream, rawSource;
+
+    const defaultConfig = {
+      optAEC: true,
+      optNS: true,
+      optAGC: false,
+      bufSize: 'interactive',
+      fftMode: 'dual',
+      cascadePasses: 0,
+      rawProcessedBlend: 0,
+      blendRatio: 0.5,
+      finalMaskBlend: 1,
+      predictAmount: 0.6,
+      sensitivity: 0,        
+      bodySaver: 100,        
+      maskSmooth: 80,        
+      maxCut: 0,             
+      strength: 0,           
+      confirmMs: 0,          // <--- SET TO 0: Opens the gate instantly without waiting for signal confirmation
+      overallGainDb: 0,
+      inputTrimDb: -9,       
+      baseNoise: 0,          
+      transientNoiseBoost: 0,
+      parallelBody: 0,
+      transientProtect: 100, // <--- SET TO 100: Protects high-frequency consonant attacks from noise reduction mask
+      harmonics: 0,          
+      syntheticSub: 0,       
+      bottomBlend: 0,
+      vocalMaskIterations: 1,
+      vocalMaskBlend: 0,
+      sampleRate: 48000,     
+      finalGate: true,       
+      gateOpenDb: 2,
+      lookaheadMs: 5         // audio is delayed this much so the gate/denoise decide BEFORE the consonant arrives
+    };
+
+    const workletCode = `
+    const FFTS = {};
+    function getFFT(n) {
+      if (FFTS[n]) return FFTS[n];
+      const rev = new Uint16Array(n), cs = new Float64Array(n / 2), sn = new Float64Array(n / 2), lg = Math.log2(n);
+      for (let i = 0; i < n; i++) { let j = 0; for (let b = 0; b < lg; b++) j = (j << 1) | ((i >> b) & 1); rev[i] = j; }
+      for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(2 * Math.PI * i / n); sn[i] = Math.sin(2 * Math.PI * i / n); }
+      return FFTS[n] = {
+        n, re: new Float64Array(n), im: new Float64Array(n), xr: new Float64Array(n), xi: new Float64Array(n),
+        fwd(re, im) {
+          for (let i = 0; i < n; i++) { const j = rev[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+          for (let size = 2; size <= n; size <<= 1) {
+            const half = size >> 1, step = n / size;
+            for (let i = 0; i < n; i += size) {
+              for (let j = i, k = 0; j < i + half; j++, k += step) {
+                const wr = cs[k], wi = -sn[k], xr = re[j + half], xi = im[j + half];
+                const tr = xr * wr - xi * wi, ti = xr * wi + xi * wr;
+                re[j + half] = re[j] - tr; im[j + half] = im[j] - ti; re[j] += tr; im[j] += ti;
+              }
+            }
+          }
+        },
+        inv(re, im) {
+          for (let i = 0; i < n; i++) im[i] = -im[i];
+          this.fwd(re, im);
+          const s = 1 / n;
+          for (let i = 0; i < n; i++) { re[i] *= s; im[i] = -im[i] * s; }
+        }
+      };
+    }
+    const hann = n => { const w = new Float32Array(n); for (let i = 0; i < n; i++) w[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * (i + 0.5) / n); return w; };
+    const N = 512, HOP = 256, K = N / 2 + 1, L = 128, ND = 2 * L, KD = ND / 2 + 1, RB = 8192, RM = RB - 1, LN = 4096, DMAX = 2000, NB = 96;
+    const WIN = hann(N), WLN = hann(LN);
+    const GATE_OPEN = 0.003, GATE_CLOSE = 0.0015; 
+    const LA = 64, LB = 128, LD = 64, LG = 128;
+    const NS = 128, KS = NS / 2 + 1, WS = (() => {
+      const w = new Float32Array(NS), T = 16, R = NS - T;
+      for (let i = 0; i < NS; i++) w[i] = i < R ? Math.pow(Math.sin(Math.PI / 2 * (i + .5) / R), 2) : Math.pow(Math.cos(Math.PI / 2 * (i - R + .5) / T), 2);
+      return w;
+    })();
+
+    class MFProcessor extends AudioWorkletProcessor {
+      constructor(opts) {
+        super();
+        const o = opts.processorOptions || {};
+        this.idx = o.index || 0;
+        this.cfg = { inputTrim: Math.pow(10, -9 / 20), overallGainLinear: 1.0, blend: 1, predict: 0.6, floorDb: -40, ceilDb: 12, smooth: 50, wl: 1 };
+        this.env = 0; this.sg = 1; this.hp = 0; this.hpo = 0;
+        this.rr = new Float32Array(RB); this.pp = new Float32Array(RB); this.wp = 0; this.filled = 0;
+        this.lag = 0; this.conf = 0; this.dep = 0; this.cand = 0; this.cn = 0; this.qn = 0; this.nextLag = 20 + (this.idx * 7) % 60;
+        this.qp = new Float32Array(8); this.qi = 0; this.sw = 0; this.g = 1; this.bl = 1; this.ready = false; this.wlAct = false; this.wlPrev = false; this.updateSmooth();
+        this.t1 = new Float32Array(K); this.hist = null; this.pb = new Float32Array(128);
+        this.sendStats = false; this.hops = 0; this.frameCount = 0; this.smoothedCpuLoad = 0; this.cpuDt = 0; this.cpuQ = 0; this.shed = 0; this.shedEff = 0; this.heavyCool = 0; this.frz = 0; this.dnMix = 1; this.gSk = 0;
+        
+        this.maskMemoryBuf = new Float32Array(K);
+        this.zeroLatencyPassState = 0;
+        this.lg = 1; this.lgT = 1; this.lgA = 1; this.lgHold = 0;
+        this.lgAtk = 1 - Math.exp(-1 / (0.008 * sampleRate)); this.lgRel = 1 - Math.exp(-1 / (0.35 * sampleRate));
+        this.oFast = 0; this.oSlow = 0; this.inSlow = 0; this.loud = 0; this.crestN = 0; this.growAny = false; this.rbPrev = 0; this.rClean = null;
+
+        this.feedbackHoldTimer = 0;
+        this.gateEnvelope = 1.0;
+        this.gateThresh = 0.002; this.gateLvl = 0; this.gateDec = Math.exp(-1 / (0.030 * sampleRate));
+        this.gateAtk = 1 - Math.exp(-1 / (0.0008 * sampleRate));
+        this.gateRel = 1 - Math.exp(-1 / (0.120 * sampleRate));
+
+        this.preGateEnv = 1.0;
+        this.postGateEnv = 1.0;
+
+        // Fader ride (per channel): lgT is the ridden fader (linear). Drops hard on extreme feedback, then slowly probes back up.
+        this.frOn = true; this.frMin = Math.pow(10, -36 / 20); this.frAcc = 0; this.frSafe = 1; this.frKnown = false; this.frStart = 1; this.frXd = false; this.frQuiet = 0; this.frWait = 0.6; this.frRawHold = 0; this.frEp = false; this.frCeilT = 0; this.frLastDb = 0; this.frState = 0;
+        this.fgEnabled = true; this.fgOpenR = Math.pow(10, 0.3); this.fg = 1; this.fgLast = true;
+        this.fgAtk = 1 - Math.exp(-1 / (0.0015 * sampleRate)); this.fgRel = 1 - Math.exp(-1 / (0.120 * sampleRate));
+        this.initMask();
+        this.initPost(); this.updatePostSmooth();
+        this.port.onmessage = (e) => {
+          if (e.data.type === 'config') {
+            const d = e.data;
+            if ('inputTrimDb' in d) this.cfg.inputTrim = Math.pow(10, d.inputTrimDb / 20);
+            if ('overallGainDb' in d) this.cfg.overallGainLinear = Math.pow(10, d.overallGainDb / 20);
+            if ('finalMaskBlend' in d) this.cfg.blend = d.finalMaskBlend;
+            if ('predictAmount' in d) this.cfg.predict = d.predictAmount;
+            if ('maskSmooth' in d) { this.cfg.smooth = d.maskSmooth; this.updateSmooth(); }
+            if ('transientProtect' in d) this.cfg.wl = Math.max(0, Math.min(1, d.transientProtect / 100));
+            if ('finalGate' in d) this.fgEnabled = !!d.finalGate;
+            if ('gateOpenDb' in d) this.fgOpenR = Math.pow(10, Math.max(0, d.gateOpenDb) / 10);
+            if ('lookaheadMs' in d) this.laD = Math.max(0, Math.min(4000, Math.round(d.lookaheadMs * 0.001 * sampleRate)));
+          } else if (e.data.type === 'shed') { this.shed = e.data.level | 0; } else if (e.data.type === 'sel') {
+            this.sendStats = !!e.data.value;
+            if (this.sendStats) this.port.postMessage({ type: 'gate', open: this.fgHold > 0, noise: this.fgNoiseCnt >= 20 });
+          }
+        };
+      }
+      initMask() {
+        this.Srr = new Float32Array(K); this.Spp = new Float32Array(K); this.L1 = new Float32Array(K); this.vel = new Float32Array(K);
+        this.Lhi = new Float32Array(K); this.Lsh = new Float32Array(K); this.Lap = new Float32Array(K);
+        this.hs = new Float32Array(L); this.ht = new Float32Array(L); this.hs[L - 1] = 1; this.ht[L - 1] = 1;
+        this.Lpr = new Float32Array(K); this.Lsm = new Float32Array(K); this.Lfin = new Float32Array(K); this.Wf = new Float32Array(K);
+        this.Wc = new Float32Array(KS); this.Pb = new Float32Array(KS); this.St = new Float32Array(KS); this.Pw = new Float32Array(KS); this.T2 = new Float32Array(KS);
+        this.lnGp = 0; this.lnGh = 0; if (this.hist) this.hist.fill(0);
+      }
+      updateSmooth() {
+        const sm = this.cfg.smooth, hopMs = 2 * 128 / sampleRate * 1000, tA = 1 + 0.05 * sm, tR = 3 + 0.20 * sm;
+        this.cA = 1 - Math.exp(-hopMs / tA); this.cR = 1 - Math.exp(-hopMs / tR);
+        this.slA = 1.0; this.slR = 0.5 - 0.3 * (sm / 100);
+        this.coefSlew = 0.55 - 0.25 * (sm / 100);
+        this.gAtk = 1 - Math.exp(-1 / (0.002 * sampleRate));
+        this.gRel = 1 - Math.exp(-1 / ((0.008 + 0.00008 * sm) * sampleRate));
+      }
+      initPost() {
+        this.PN = 512; this.PK = this.PN / 2 + 1; this.PW = hann(this.PN); this.PS = (this.PN / 512) * (this.PN / 512);
+        this.holdHops = Math.max(8, Math.round(0.13 * sampleRate / 256));
+        const PK = this.PK;
+        this.pSr = new Float32Array(PK); this.pSo = new Float32Array(PK); this.pSa = new Float32Array(PK);
+        this.La = new Float32Array(PK); this.Lb = new Float32Array(PK); this.tA = new Float32Array(PK); this.tB = new Float32Array(PK); this.tS = new Float32Array(PK);
+        this.haS = new Float32Array(LA); this.haT = new Float32Array(LA); this.hbS = new Float32Array(LB); this.hbT = new Float32Array(LB);
+        this.haS[LA - 1] = this.haT[LA - 1] = 1; this.hbS[LB - 1] = this.hbT[LB - 1] = 1;
+        this.rw = new Float32Array(RB); this.oo = new Float32Array(RB); this.aa = new Float32Array(RB);
+        this.HR = null; this.HO = null; this.HD = null; this.rcB = new Float32Array(128);
+        this.hbO = new Float32Array(LB); this.hbD = new Float32Array(LB);
+        this.fbPrev = new Float32Array(PK); this.fbAge = new Float32Array(PK); this.tF = new Float32Array(PK); this.tG = new Float32Array(PK); this.Fb = new Float32Array(PK); this.fbGrow = new Uint8Array(PK);
+        this.gHold = 0; this.g1 = 1; this.g2 = 1; this.vr = 0; this.tonalDom = false; this.fbEnv = 0;
+        this.gAtkB = 1 - Math.exp(-1 / (0.0025 * sampleRate)); this.gRelB = 1 - Math.exp(-1 / (0.045 * sampleRate));
+        this.tSs = new Float32Array(PK); this.Nn = new Float32Array(PK); this.Nb = new Float32Array(PK); this.Ld = new Float32Array(PK); this.tD = new Float32Array(PK); this.tD2 = new Float32Array(PK);
+        this.dnS = new Float32Array(LD); this.dnT = new Float32Array(LD); this.dnO = new Float32Array(LD); this.dnD = new Float32Array(LD);
+        this.dnS[LD - 1] = this.dnT[LD - 1] = 1; this.nzAge = 0; this.nzQuiet = 0; this.nzReady = false; this.lfAge = 0; this.openAge = 0; this.openLen = Math.round(0.015 * sampleRate);
+        this.flb = new Uint8Array(PK); this.ringCut = new Uint8Array(PK); this.fgR = new Float32Array(PK); this.fgS = new Float32Array(PK);
+        this.initGate();
+        this.dnMix2 = 0; this.fgHold = 0; this.fgHoldHops = Math.max(8, Math.round(0.40 * sampleRate / 256)); this.fgOn = false; this.fgNoiseCnt = 0; this.nzMaxAge = Math.max(32, Math.round(1.0 * sampleRate / 256)); this.gAge = 0; this.fgSnr = 0; this.fgEnv = 1;
+        this.stM = 0; this.stD = 0; this.stInit = false; this.statCnt = 0; this.ambientNow = false; this.statNeed = Math.max(60, Math.round(4.0 * sampleRate / 256)); this.stC = 1 - Math.exp(-(256 / sampleRate) / 0.5);
+        this.vcBuf = new Float32Array(512); this.pkFrac = 0; this.voiced = 0; this.vcCnt = 0; this.vcRc = new Float32Array(200);
+        this.fbLeak = false; this.fbLeakCnt = 0; this.fgAct = 0; this.fgGentle = 0; this.fgHoldVoc = Math.max(16, Math.round(0.50 * sampleRate / 256)); this.fgHoldMin = Math.max(6, Math.round(0.06 * sampleRate / 256));
+        this.gentleVoc = Math.max(8, Math.round(0.12 * sampleRate / 256)); this.gentleNo = Math.max(4, Math.round(0.08 * sampleRate / 256)); this.provHops = Math.max(4, Math.round(0.04 * sampleRate / 256));
+        this.oe = 0; this.nf = 0; this.oeA = 1 - Math.exp(-1 / (0.001 * sampleRate)); this.oeR = 1 - Math.exp(-1 / (0.010 * sampleRate)); this.nfU = 1 - Math.exp(-1 / (0.5 * sampleRate)); this.nfD = 1 - Math.exp(-1 / (0.010 * sampleRate));
+      }
+      initGate() {
+        this.laS = new Float32Array(4096); this.laO = new Float32Array(4096); this.laW = 0; if (this.laD === undefined) this.laD = Math.round(0.005 * sampleRate);
+        const NG = 256, HG = NG >> 2, KG = NG / 2 + 1;
+        this.NG = NG; this.HG = HG; this.KG = KG;
+        this.gw = new Float32Array(NG); for (let i = 0; i < NG; i++) this.gw[i] = Math.sqrt(0.5 - 0.5 * Math.cos(2 * Math.PI * i / NG));
+        this.gSb = new Float32Array(NG); this.gp = 0; this.gc = 0;
+        this.gPs = new Float32Array(KG); this.gNs = new Float32Array(KG); this.gG = new Float32Array(KG); this.gRing = new Uint8Array(KG);
+        this.gInit = false; this.gClosed = 0; this.gReady = false; this.gLearning = true; this.sigHold = 0; this.sigPresent = false; this.sigHoldHops = Math.max(8, Math.round(0.45 * sampleRate / 256));
+        const hopS = HG / sampleRate;
+        this.gLearn = 1 - Math.exp(-hopS / 0.15); this.gRelC = 1 - Math.exp(-hopS / 0.05);
+        if (this.fe === undefined) this.fe = 0;
+        this.ringAny = false; this.hfHold = 0; this.onHold = 0; this.totSlow = 0;
+        this.lvR = 1e-8; this.lvO = 1e-8; this.lvN = 0; this.hpR = 0; this.hpRx = 0; this.hpO = 0; this.hpOx = 0;
+        this.lvC = 1 - Math.exp(-1 / (0.3 * sampleRate)); this.lvUp = 1 - Math.exp(-HG / sampleRate / 0.5);
+        if (this.mk === undefined) this.mk = 1 / Math.max(1e-3, this.cfg.inputTrim);
+        this.gFirS = new Float32Array(LG); this.gFirT = new Float32Array(LG); this.gFirS[LG - 1] = 1; this.gFirT[LG - 1] = 1;
+        this.gLgk = new Float32Array(KG); this.gLgs = new Float32Array(KG); this.gRingS = new Float32Array(KG); this.gFirO = new Float32Array(LG); this.gFirD = new Float32Array(LG); this.gLg = new Float32Array(this.PK); this.gFrameN = 0; this.GH = null;
+      }
+      gateStep(sbv) {
+        this.gSb[this.gp] = sbv; this.gp = (this.gp + 1) & (this.NG - 1);
+        if (++this.gc >= this.HG) { this.gc = 0; if (this.shedEff < 2 || ((++this.gSk) & 1)) this.gateFrame(); }
+      }
+      gateFrame() {
+        const NG = this.NG, KG = this.KG, PK = this.PK, f = getFFT(NG), re = f.re, im = f.im, w = this.gw, gp = this.gp, M = NG - 1;
+        const Ps = this.gPs, Ns = this.gNs, G = this.gG, ring = this.gRing;
+        const open = this.sw > 0.15 ? 0.85 * this.sw : 0;
+        for (let i = 0; i < NG; i++) { re[i] = this.gSb[(gp + i) & M] * w[i]; im[i] = 0; }
+        f.fwd(re, im);
+        let hfRaw = 0, totRaw = 0;
+        const kHF = Math.max(2, Math.ceil(1200 / (sampleRate / NG)));
+        for (let k = 0; k < KG; k++) { const pw = re[k] * re[k] + im[k] * im[k]; Ps[k] = Ps[k] * 0.5 + 0.5 * pw; if (k >= kHF) hfRaw += pw; if (k >= 2) totRaw += pw; }
+        if (!this.gInit) { Ns.set(Ps); this.gInit = true; }
+        // Consonant protection: broadband HF energy clearly above the learned HF noise floor keeps HF bins + gates open (fricatives/plosives look noise-like otherwise)
+        { let hfN = 0, totN = 0; for (let k = kHF; k < KG; k++) hfN += Ns[k]; for (let k = 2; k < KG; k++) totN += Ns[k];
+          const fl = 1e-10 * NG * NG * 4, safe = !this.fbLeak && !this.growAny;
+          const hfAct = this.gReady && hfRaw > 1.8 * hfN + fl && safe;
+          // broadband onset: sudden rise vs. slow tracker AND clearly above noise floor (plosives, b/d/g/m/n, instrument attacks)
+          const onAct = this.gReady && totRaw > 2.2 * this.totSlow + fl && totRaw > 2 * totN + fl && safe;
+          this.totSlow += (totRaw - this.totSlow) * (totRaw > this.totSlow ? 0.02 : 0.1);
+          if (hfAct) this.hfHold = 60; else if (this.hfHold > 0) this.hfHold--;
+          if (onAct) this.onHold = 45; else if (this.onHold > 0) this.onHold--;
+          if (hfAct || onAct) { if (this.fgHold < this.provHops * 3) this.fgHold = this.provHops * 3; if (this.gHold < this.holdHops) this.gHold = this.holdHops; }
+          if (this.onHold > 0 && !this.hfHold) this.hfHold = 1; }
+        const hfOpen = this.hfHold > 0, onOpen = this.onHold > 0;
+        const present = this.sigPresent || this.fgVocal || this.voiced > 0.4 || this.hfHold > 0 || this.onHold > 0;
+        this.gLearning = !present;
+        if (!present) { const c = this.gReady ? this.gLearn : this.gLearn * 2; for (let k = 0; k < KG; k++) Ns[k] += (Ps[k] - Ns[k]) * c; if (++this.gClosed >= 100) this.gReady = true; }
+        else if (!this.gReady) { const c = this.gLearn * 0.5; for (let k = 0; k < KG; k++) if (Ps[k] < Ns[k]) Ns[k] += (Ps[k] - Ns[k]) * c; }
+        if (!this.gReady && ++this.gAge >= 400) this.gReady = true;
+        const gen = this.fgGentle > 0, thr = this.fgOpenR * (gen ? 0.06 : 0.15), tiny = 1e-10 * NG * NG, rel = gen ? this.gRelC * 0.25 : this.gRelC * 0.3, gFl = gen ? 0.85 : 0.7, gEx = gen ? 1.0 : 1.0;
+        const gRs = this.gRingS;
+        for (let k = 0; k < KG; k++) {
+          const k0 = k > 0 ? k - 1 : 0, k1 = k < KG - 1 ? k + 1 : k;
+          const rT = ring[k] ? 1 : 0; gRs[k] += (rT - gRs[k]) * (rT > gRs[k] ? 0.16 : 0.04);
+          let tgt = 1;
+          if (this.gReady) { const rt = (Ps[k0] + Ps[k] + Ps[k1]) / (thr * (Ns[k0] + Ns[k] + Ns[k1] + tiny)); if (rt < 1) { tgt = Math.pow(rt, gEx); if (tgt < gFl) tgt = gFl; } }
+          if (open > tgt) tgt = open;
+          if (((hfOpen && k >= kHF) || onOpen) && tgt < 0.97) tgt = 0.97;
+          const cur = G[k]; G[k] = cur + (tgt - cur) * (tgt > cur ? 0.9 : rel);
+        }
+        if ((++this.gFrameN & 1) === 0) {
+          const lgk = this.gLgk, lgs = this.gLgs, lg = this.gLg, LNR = Math.log(0.02);
+          for (let k = 0; k < KG; k++) lgs[k] = Math.log(G[k] > 0.01 ? G[k] : 0.01) + gRs[k] * LNR;
+          for (let k = 0; k < KG; k++) lgk[k] = (lgs[k > 0 ? k - 1 : 0] + 2 * lgs[k] + lgs[k < KG - 1 ? k + 1 : k]) * 0.25;
+          const ratio = (KG - 1) / Math.max(1, PK - 1);
+          for (let k = 0; k < PK; k++) { const q = k * ratio, i = q | 0; lg[k] = i < KG - 1 ? lgk[i] + (lgk[i + 1] - lgk[i]) * (q - i) : lgk[KG - 1]; }
+          this.mpFIR(lg, LG, this.gFirT);
+        }
+      }
+      updatePostSmooth() {
+        const hopMs = 2 * 128 / sampleRate * 1000;
+        this.pAD = 1 - Math.exp(-hopMs / 4); this.pAU = 1 - Math.exp(-hopMs / 12);
+        this.pBD = 1 - Math.exp(-hopMs / 8); this.pBU = 1 - Math.exp(-hopMs / 15);
+        this.pFD = 1 - Math.exp(-hopMs / 6); this.pFU = 1 - Math.exp(-hopMs / 120);
+        this.pDU = 1 - Math.exp(-hopMs / 3); this.pDD = 1 - Math.exp(-hopMs / 25);
+        this.pNQ = 1 - Math.exp(-hopMs / 150); this.pNU = 1 - Math.exp(-hopMs / 30000); this.pNM = 1 - Math.exp(-hopMs / 800);
+      }
+      mpFIR(Lf, Lh, dst) {
+        const PK = this.PK, nd = 2 * Lh, kd = Lh + 1, step = this.PN / nd, g = getFFT(nd), dr = g.re, di = g.im;
+        for (let j = 0; j < kd; j++) {
+          let acc = 0, ws = 0;
+          for (let d = 1 - step; d < step; d++) { let k = j * step + d; k = k < 0 ? -k : k > PK - 1 ? 2 * (PK - 1) - k : k; const w = step - (d < 0 ? -d : d); acc += Lf[k] * w; ws += w; }
+          const v = acc / ws; dr[j] = v; if (j > 0 && j < nd / 2) dr[nd - j] = v;
+        }
+        di.fill(0); g.inv(dr, di);
+        for (let n = 1; n < nd / 2; n++) dr[n] *= 2; for (let n = nd / 2 + 1; n < nd; n++) dr[n] = 0; di.fill(0);
+        g.fwd(dr, di);
+        for (let n = 0; n < nd; n++) { const m = Math.exp(dr[n]), ph = di[n]; dr[n] = m * Math.cos(ph); di[n] = m * Math.sin(ph); }
+        g.inv(dr, di);
+        const tp = Lh * 3 / 4 | 0;
+        for (let n = 0; n < Lh; n++) { const t = n < tp ? 1 : 0.5 + 0.5 * Math.cos(Math.PI * (n - tp) / (Lh - tp)); dst[Lh - 1 - n] = dr[n] * t; }
+      }
+      smooth5(src, dst) {
+        const PK = this.PK;
+        for (let k = 0; k < PK; k++) {
+          const k_m2 = k - 2 < 0 ? -(k - 2) : k - 2;
+          const k_m1 = k - 1 < 0 ? -(k - 1) : k - 1;
+          const k_p1 = k + 1 > PK - 1 ? 2 * (PK - 1) - (k + 1) : k + 1;
+          const k_p2 = k + 2 > PK - 1 ? 2 * (PK - 1) - (k + 2) : k + 2;
+          dst[k] = (src[k_m2] + 2 * src[k_m1] + 3 * src[k] + 2 * src[k_p1] + src[k_p2]) * (1 / 9);
+        }
+      }
+      detectFeedback() {
+        const PK = this.PK, PS = this.PS, Pr = this.pSr, Pk = this.fbPrev, age = this.fbAge, tF = this.tF, tG = this.tG, Fb = this.Fb, uF = this.pFU, dF = this.pFD, grw = this.fbGrow, loud = this.loud;
+        const hiVol = loud > 0.4, hiVol2 = loud > 0.6;
+        const harmTol = 0.05 + 0.12 * loud, ageFull = hiVol2 ? 6 : (hiVol ? 7 : 9);
+        const howlOK = (loud > 0.2 && this.rbPrev <= 8) || hiVol;
+        const promBase = hiVol2 ? 14 : (hiVol ? 18 : 22);
+        const pMin = hiVol2 ? 0.012 * PS : (hiVol ? 0.018 * PS : 0.025 * PS);
+        let growAny = false, rb = 0;
+        for (let k = 0; k < PK; k++) {
+          let fl = 0, cnt = 0;
+          for (let d = 3; d <= 7; d++) { if (k - d >= 0) { fl += Pr[k - d]; cnt++; } if (k + d < PK) { fl += Pr[k + d]; cnt++; } }
+          fl /= cnt; const p = Pr[k], prom = p / (fl + 1e-7 * PS);
+          let pk = k >= 3 && p >= Pr[k - 1] && p >= Pr[k < PK - 1 ? k + 1 : PK - 1];
+          if (pk && k < 12) {
+            const k2 = 2 * k, kh = k >> 1;
+            const h2 = Math.max(Pr[k2 - 1], Pr[k2], Pr[k2 + 1]), h0 = kh >= 2 ? Math.max(Pr[kh - 1], Pr[kh], Pr[kh + 1]) : 0;
+            if (h2 > 0.035 * p || h0 > 0.035 * p) pk = false;
+          }
+          const nearAge = (k > 0 ? age[k - 1] : 0) + (k < PK - 1 ? age[k + 1] : 0);
+          if ((pk && prom > promBase && p > pMin) || (nearAge >= 4 && prom > promBase * 0.75 && p > pMin * 0.8)) {
+            if (p >= Pk[k] * 0.78) { if (age[k] < 14) age[k]++; } else if (age[k] > 0) age[k]--;
+            if (p > Pk[k] * 1.07) { if (grw[k] < 10) grw[k]++; } else if (p < Pk[k] * 0.9 && grw[k] > 0) grw[k]--;
+          } else { if (age[k] > 0) age[k] -= (age[k] > 1 ? 2 : 1); grw[k] = 0; }
+          if (p > Pk[k] * 1.12 && p > 0.004 * PS) rb++;
+          Pk[k] = p;
+          const howl = howlOK && grw[k] >= 5 && age[k] >= 2; if (howl) growAny = true;
+          let t = 0;
+          if (age[k] >= 3 || howl) {
+            let mus = false;
+            if (!howl) {
+              for (let m = 2; m <= 4 && !mus; m++) { const i = m * k; if (i + 2 < PK) { const h = Math.max(Pr[i - 2], Pr[i - 1], Pr[i], Pr[i + 1], Pr[i + 2]); if (h > harmTol * p) mus = true; } }
+              if (!mus && k >= 4) { const kh = k >> 1, h = Math.max(Pr[kh - 2], Pr[kh - 1], Pr[kh], Pr[kh + 1], Pr[kh + 2]); if (h > harmTol * p) mus = true; }
+            }
+            if (!mus || age[k] >= ageFull || howl) {
+              const maxDepth = howl ? 3.0 : (hiVol ? 2.2 : 1.8);
+              const depth = Math.min(maxDepth, (10 * Math.log10(Math.max(prom, 12)) - 8) * 0.115129 * 1.0) * (mus ? 0.1 + 0.2 * loud : 1);
+              t = depth > 0 ? -depth : 0;
+            }
+          }
+          tF[k] = t;
+        }
+        this.growAny = growAny; this.rbPrev = rb;
+        for (let k = 0; k < PK; k++) {
+          let t = tF[k];
+          const l1 = 0.45 * tF[k > 0 ? k - 1 : 0], r1 = 0.45 * tF[k < PK - 1 ? k + 1 : PK - 1];
+          if (l1 < t) t = l1; if (r1 < t) t = r1;
+          tG[k] = t;
+        }
+        {
+          let fl = 0; for (let k = 4; k <= 11; k++) fl += Pr[k]; fl /= 8;
+          const lE = (Pr[0] + Pr[1] + Pr[2] + Pr[3]) / 4, lprom = lE / (fl + 1e-7 * PS);
+          let lmax = Pr[0]; if (Pr[1] > lmax) lmax = Pr[1]; if (Pr[2] > lmax) lmax = Pr[2]; if (Pr[3] > lmax) lmax = Pr[3];
+          let hmax = 0; for (let k = 4; k <= 11; k++) if (Pr[k] > hmax) hmax = Pr[k];
+          if (lprom > 22 && lE > 0.03 * PS && hmax < 0.04 * lmax) { if (this.lfAge < 16) this.lfAge++; } else if (this.lfAge > 0) this.lfAge -= (this.lfAge > 1 ? 2 : 1);
+          if (this.lfAge >= 5) { const q = -Math.min(3.2, (10 * Math.log10(lprom) - 5) * 0.115129 * 1.2); for (let k = 0; k <= 4; k++) if (q < tG[k]) tG[k] = q; }
+        }
+        for (let k = 0; k < PK; k++) { const cur = Fb[k], d = tG[k] - cur; Fb[k] = cur + d * (d < 0 ? dF : uF); }
+        let eu = 0, ef = 0, en = 0; const flb = this.flb, Nn = this.Nn, ringCut = this.ringCut, eN = 1e-9 * PS;
+        for (let k = 0; k < PK; k++) {
+          const fl = (age[k] >= 4) || (k > 0 && age[k - 1] >= 4) || (k < PK - 1 && age[k + 1] >= 4) || (k > 1 && age[k - 2] >= 5) || (k < PK - 1 && age[k + 2] >= 5) || (k > 2 && age[k - 3] >= 6) || (k < PK - 3 && age[k + 3] >= 6);
+          flb[k] = fl ? 1 : 0;
+          if (fl) ef += Pr[k]; else { eu += Pr[k]; en += Nn[k] + eN; }
+        }
+        for (let k = 0; k < PK; k++) {
+          let cut = 0;
+          const hw = howlOK && grw[k] >= 5 && age[k] >= 2;
+          if (age[k] >= 4 || hw || (ringCut[k] && age[k] >= 2)) {
+            const p = Pr[k]; cut = 1;
+            if (!hw) {
+              for (let m = 2; m <= 3 && cut; m++) { const i = m * k; if (i + 1 < PK) { const h = Math.max(Pr[i - 1], Pr[i], Pr[i + 1]); if (h > harmTol * p * 0.9) cut = 0; } }
+              if (cut && k >= 4) { const kh = k >> 1, h = Math.max(Pr[kh - 1], Pr[kh], Pr[kh + 1]); if (h > harmTol * p * 0.9) cut = 0; }
+            }
+          }
+          ringCut[k] = cut;
+        }
+        {
+          const r2 = this.gRing, KG = this.KG, ratio = this.NG / this.PN; r2.fill(0);
+          let anyRing = false;
+          for (let k = 0; k < PK; k++) if (ringCut[k]) {
+            anyRing = true; const q = k * ratio, lo = Math.floor(q) - 1, hi = Math.ceil(q) + 1;
+            for (let j = lo; j <= hi; j++) if (j >= 0 && j < KG) r2[j] = 1;
+          }
+          this.ringAny = anyRing;
+        }
+        const vr = Math.sqrt(eu / (3 * this.PN * this.PN / 16)); this.vr = vr; this.tonalDom = ef > 4 * eu;
+        const vrN = Math.sqrt(en / (3 * this.PN * this.PN / 16)), vrel = this.nzReady && vr > 3 * vrN && vr > 5e-5;
+        if (this.ambientNow && this.voiced < 0.25) { if (this.gHold > 0) this.gHold--; }
+        else if (vr > GATE_OPEN || (vrel && this.voiced > 0.4) || this.voiced > 0.5) this.gHold = this.holdHops;
+        else if ((vr > GATE_CLOSE || (vrel && this.voiced > 0.3) || this.voiced > 0.4) && this.gHold > 0) this.gHold = this.holdHops;
+        else if (this.gHold > 0) this.gHold--;
+        this.finalGateDecide(eu, en);
+      }
+      detectVoice() {
+        const D = Math.max(1, Math.round(sampleRate / 12000)), M = 256, fs = sampleRate / D;
+        const Lmin = Math.max(8, Math.floor(fs / 500)), Lmax = Math.min(171, Math.floor(fs / 70)), need = M + Lmax + 2, buf = this.vcBuf, rr = this.rr, rc = this.vcRc;
+        const base = this.wp - need * D, inv = 1 / D; let mean = 0;
+        for (let i = 0; i < need; i++) { let sm = 0; for (let d = 0; d < D; d++) sm += rr[(base + i * D + d) & RM]; sm *= inv; buf[i] = sm; mean += sm; }
+        mean /= need; for (let i = 0; i < need; i++) buf[i] -= mean;
+        let e0 = 0; for (let i = 0; i < M; i++) e0 += buf[i] * buf[i];
+        if (e0 < 2e-9 * M) { this.voiced *= 0.5; return; }
+        let zc = -1;
+        for (let L = 1; L <= Lmax + 1; L++) {
+          let c = 0, eL = 0; for (let i = 0; i < M; i++) { const v = buf[i + L]; c += buf[i] * v; eL += v * v; }
+          const v = c / Math.sqrt(e0 * eL + 1e-20); rc[L] = v; if (zc < 0 && v < 0) zc = L;
+        }
+        let best = 0;
+        if (zc > 0) for (let L = Math.max(zc, Lmin); L <= Lmax; L++) { const v = rc[L]; if (v > rc[L - 1] && v >= rc[L + 1] && v > best) best = v; }
+        { const Pr = this.pSr, PK = this.PK; let tot = 0, mx = 0; for (let k = 1; k < PK - 1; k++) { tot += Pr[k]; const m3 = Pr[k - 1] + Pr[k] + Pr[k + 1]; if (m3 > mx) mx = m3; } this.pkFrac = mx / (tot + 1e-12); if (this.pkFrac > 0.85 || this.growAny) best = 0; }
+        this.voiced += (best - this.voiced) * 0.6;
+      }
+      finalGateDecide(eu, en) {
+        const PK = this.PK, Pr = this.pSr, Nn = this.Nn, flb = this.flb, eN = 1e-9 * this.PS;
+        let intended, present;
+        if (!this.nzReady) { intended = this.vr > GATE_OPEN || (this.fgOn && this.vr > GATE_CLOSE); present = this.vr > GATE_OPEN; this.fgSnr = 0; this.fgVocal = false; }
+        else {
+          const snr = eu / (en + 1e-12); this.fgSnr = snr;
+          const df = sampleRate / this.PN, kLo = Math.max(2, Math.ceil(100 / df)), kHi = Math.min(PK - 2, Math.floor(8000 / df)), R = this.fgR, S = this.fgS;
+          let nb = 0;
+          for (let k = kLo; k <= kHi; k++) R[k] = flb[k] ? 0 : Pr[k] / (Nn[k] + eN);
+          let pk = 0;
+          for (let k = kLo + 1; k < kHi; k++) { if (flb[k]) continue; const v = (R[k - 1] + R[k] + R[k + 1]) * (1 / 3); if (v > pk) pk = v; S[nb++] = R[k]; }
+          let ratio = 1e9;
+          if (nb > 8) { const a = S.subarray(0, nb); a.sort(); const med = a[nb >> 1]; ratio = pk / (med + 1e-6); }
+          const vocal = this.voiced > 0.35 && snr > 1.0;
+          const strong = snr > this.fgOpenR * 1.1 || vocal;
+          if (vocal) this.fgNoiseCnt = 0;
+          else if (ratio < 7 && !strong) { if (this.fgNoiseCnt < 50) this.fgNoiseCnt++; } else this.fgNoiseCnt = this.fgNoiseCnt > 4 ? this.fgNoiseCnt - 4 : 0;
+          const noiseLike = this.fgNoiseCnt >= 40 && !strong && !vocal && !(this.hfHold > 0) && !(this.onHold > 0);
+          const need = (this.tonalDom && !vocal && !this.ringAny && this.voiced < 0.25) ? 1.8 : 1;
+          const thr = (this.fgOn ? this.fgOpenR * 0.28 : this.fgOpenR * 0.85) * need * (vocal ? 0.08 : 1);
+          {
+            const le = Math.log(eu + 1e-12); if (!this.stInit) { this.stM = le; this.stInit = true; }
+            const dv = le - this.stM, adv = dv < 0 ? -dv : dv; this.stM += dv * this.stC; this.stD += (adv - this.stD) * this.stC;
+            if (adv > 1.0) { this.stM = le; this.stD = 0; this.statCnt = 0; } else if (this.voiced > 0.28 || this.ringAny || vocal) this.statCnt = 0;
+            else if (this.stD < 0.25 && snr > 2.0) { if (this.statCnt < 4000) this.statCnt++; } else if (this.statCnt > 0) this.statCnt--;
+            this.ambientNow = this.statCnt > this.statNeed && adv < 0.55 && !vocal;
+          }
+          intended = (snr > thr && !noiseLike && !this.ambientNow) || vocal;
+          this.fgVocal = vocal;
+          present = vocal || (snr > this.fgOpenR * 0.5 && !noiseLike && !(this.ambientNow && this.statCnt > this.statNeed * 4));
+        }
+        this.fgOn = intended;
+        if (present) this.sigHold = this.sigHoldHops; else if (this.sigHold > 0) this.sigHold--;
+        this.sigPresent = this.sigHold > 0;
+        if (intended) {
+          if (this.fgAct < 500) this.fgAct++;
+          const h = this.fgVocal ? Math.max(this.fgHoldVoc, 40) : Math.min(this.fgHoldHops, this.fgHoldMin + this.fgAct);
+          if (h > this.fgHold) this.fgHold = h;
+          const pureHowl = (this.growAny || this.pkFrac > 0.8) && !this.fgVocal && this.voiced < 0.22;
+          const g = pureHowl ? 0 : (this.fgVocal ? this.gentleVoc + 4 : (this.fgAct > 4 ? this.gentleNo : 0));
+          if (g > this.fgGentle) this.fgGentle = g; else if (pureHowl) this.fgGentle = 0;
+        } else { this.fgAct = this.fgAct > 1 ? this.fgAct - 1 : 0; if (this.fgHold > 0) this.fgHold--; }
+        // Fast close under feedback leakage: howl/ring energy with no voice present must not hold the gate open
+        const leakNow = !this.fgVocal && this.voiced < 0.3 && (this.growAny || this.feedbackHoldTimer > 0);
+        this.fbLeakCnt = leakNow ? Math.min(6, (this.fbLeakCnt | 0) + 1) : Math.max(0, (this.fbLeakCnt | 0) - 2);
+        this.fbLeak = this.fbLeakCnt >= 2;   // needs ~2 consecutive hops of real growth; music sustain/decay won't qualify
+        if (this.fbLeak) { if (this.fgHold > 2) this.fgHold = 2; this.fgGentle = 0; if (this.gHold > 4) this.gHold = 4; }
+        if (this.fgGentle > 0) this.fgGentle--;
+        const st = this.fgHold > 0, nz = this.fgNoiseCnt >= 20;
+        if (st !== this.fgLast || nz !== this.fgLastNz) { this.fgLast = st; this.fgLastNz = nz; if (this.sendStats) this.port.postMessage({ type: 'gate', open: st, noise: nz }); }
+      }
+      designDenoise() {
+        const PK = this.PK, PS = this.PS, Pr = this.pSr, Nn = this.Nn, Nb = this.Nb, tD = this.tD, tD2 = this.tD2, Ld = this.Ld;
+        const quiet = this.gHold === 0 && !(this.hfHold > 0) && !(this.onHold > 0); this.nzAge++; if (quiet) this.nzQuiet++;
+        if (!this.nzReady && (this.nzQuiet >= 20 || this.nzAge >= this.nzMaxAge)) this.nzReady = true;
+        for (let k = 0; k < PK; k++) {
+          const pr = Pr[k]; let nz = Nn[k]; if (nz === 0) nz = pr;
+          if (quiet) { nz += (pr - nz) * this.pNQ; Nb[k] = nz; }
+          else {
+            if (pr < nz) nz += (pr - nz) * this.pNM; else nz += (pr - nz) * this.pNU;
+            if (Nb[k] > 0) { if (nz > 4 * Nb[k]) nz = 4 * Nb[k]; if (nz < 0.85 * Nb[k]) nz = 0.85 * Nb[k]; }
+          }
+          Nn[k] = nz;
+        }
+        const rel = 1 - 0.4 * this.sw, floorD = -2.1, tS = this.tS;   // deeper max cut (~-18 dB, was ~-10 dB)
+        for (let k = 0; k < PK; k++) { const v = Pr[k] / (1.6 * Nn[k] + 1e-9 * PS), c = this.tSs[k], n2 = c + (v - c) * (v > c ? 0.8 : 0.12); this.tSs[k] = n2; tS[k] = n2; }
+        this.smooth5(tS, tD);
+        const kC = Math.max(2, Math.round(1200 / (sampleRate / this.PN))), cons = (this.hfHold > 0 || this.onHold > 0);
+        for (let k = 0; k < PK; k++) {
+          let t = 0;
+          if (this.nzReady) {
+            const xi = Math.max(0, tD[k] - 1), g2 = xi / (1 + xi);
+            // HF (consonant) region: never cut deeper than ~-6 dB normally, ~-1.5 dB while a consonant/onset is detected
+            const fl = k >= kC ? (cons ? -0.18 : -0.7) : (cons ? -0.7 : floorD);
+            t = 0.5 * Math.log(g2 + 1e-9); if (t < fl) t = fl; t *= rel;
+          }
+          tD[k] = t;
+        }
+        this.smooth5(tD, tD2);
+        {
+          const rc = this.ringCut;
+          for (let k = 0; k < PK; k++) if (rc[k]) {
+            if (tD2[k] > -2.4) tD2[k] = -2.4;
+            if (k > 0 && tD2[k - 1] > -1.2) tD2[k - 1] = -1.2;
+            if (k < PK - 1 && tD2[k + 1] > -1.2) tD2[k + 1] = -1.2;
+          }
+        }
+        const up = this.pDU, dn = this.pDD;
+        for (let k = 0; k < PK; k++) { const cur = Ld[k], d = tD2[k] - cur; Ld[k] = cur + d * (d > 0 ? up : dn); }
+        this.mpFIR(Ld, LD, this.dnT);
+      }
+      post() {
+        const PN = this.PN, PK = this.PK, PS = this.PS, PW = this.PW, f = getFFT(PN), re = f.re, im = f.im, wp = this.wp, Pr = this.pSr, Po = this.pSo, Pa = this.pSa, a = 0.5, eps = 1e-9 * PN, lwE = 5e-4 * PS;
+        for (let i = 0; i < PN; i++) { const w = PW[i], ix = (wp - PN + i) & RM; re[i] = this.rw[ix] * w; im[i] = this.oo[ix] * w; }
+        f.fwd(re, im);
+        for (let k = 0; k < PK; k++) {
+          const kn = (PN - k) & (PN - 1);
+          const rr = (re[k] + re[kn]) * .5, ri = (im[k] - im[kn]) * .5, pr = (im[k] + im[kn]) * .5, pi = (re[kn] - re[k]) * .5;
+          Pr[k] = Pr[k] * a + (1 - a) * (rr * rr + ri * ri); Po[k] = Po[k] * a + (1 - a) * (pr * pr + pi * pi);
+        }
+        if ((++this.vcCnt & 3) === 0) this.detectVoice();
+        this.detectFeedback();
+        const tA = this.tA, tB = this.tB, tS = this.tS, rel = 1 - 0.4 * this.sw, floorA = -2.0, floorB = -2.6;
+        for (let k = 0; k < PK; k++) {
+          const v = 0.5 * Math.log((Pr[k] + eps) / (Po[k] + eps)) + 0.04, lw = Po[k] / (Po[k] + lwE);
+          let t = 0.5 * (v - Math.sqrt(v * v + 0.001)) * lw * rel; tS[k] = t < floorA ? floorA : t;
+        }
+        this.smooth5(tS, tA);
+        const La = this.La, uA = this.pAU, dA = this.pAD;
+        for (let k = 0; k < PK; k++) { const cur = La[k], d = tA[k] - cur; La[k] = cur + d * (d > 0 ? uA : dA); }
+        this.mpFIR(La, LA, this.haT);
+        for (let i = 0; i < PN; i++) { re[i] = this.aa[(wp - PN + i) & RM] * PW[i]; im[i] = 0; }
+        f.fwd(re, im);
+        for (let k = 0; k < PK; k++) Pa[k] = Pa[k] * a + (1 - a) * (re[k] * re[k] + im[k] * im[k]);
+        for (let k = 0; k < PK; k++) {
+          const v = 0.5 * Math.log((Pa[k] + eps) / (Pr[k] + eps)) + 0.04, lw = Pr[k] / (Pr[k] + lwE);
+          let t = 0.5 * (v - Math.sqrt(v * v + 0.001)) * lw * rel; tS[k] = t < floorB ? floorB : t;
+        }
+        this.smooth5(tS, tB);
+        const Fb = this.Fb;
+        for (let k = 0; k < PK; k++) { const q = Fb[k]; if (q < tB[k]) tB[k] = q < floorB ? floorB : q; }
+        let lf = 0; for (let k = 0; k <= 5; k++) if (Fb[k] < lf) lf = Fb[k];
+        if (lf < -0.1) { for (let k = 0; k <= 8; k++) { const q = lf * (k <= 4 ? 1 : k === 5 ? 0.7 : k === 6 ? 0.45 : 0.25); if (q < tB[k]) tB[k] = q < floorB ? floorB : q; } }
+        const Lb = this.Lb, uB = this.pBU, dB = this.pBD;
+        for (let k = 0; k < PK; k++) { const cur = Lb[k], d = tB[k] - cur; Lb[k] = cur + d * (d > 0 ? uB : dB); }
+        this.mpFIR(Lb, LB, this.hbT);
+        this.designDenoise();
+      }
+      analyze() {
+        const f = getFFT(N), re = f.re, im = f.im, c = this.cfg, wp = this.wp, lag = this.lag, ro = lag > 0 ? lag : 0, po = lag < 0 ? -lag : 0;
+        for (let i = 0; i < N; i++) { const w = WIN[i]; re[i] = this.rr[(wp - ro - N + i) & RM] * w; im[i] = this.pp[(wp - po - N + i) & RM] * w; }
+        f.fwd(re, im);
+        const a = 0.35, eps = 1e-9 * N, lo = c.floorDb * 0.115129, hi = c.ceilDb * 0.115129, raw = this.t1, Srr = this.Srr, Spp = this.Spp;
+        for (let k = 0; k < K; k++) {
+          const kn = (N - k) & (N - 1);
+          const rr = (re[k] + re[kn]) * .5, ri = (im[k] - im[kn]) * .5, pr = (im[k] + im[kn]) * .5, pi = (re[kn] - re[k]) * .5;
+          Srr[k] = Srr[k] * a + (1 - a) * (rr * rr + ri * ri); Spp[k] = Spp[k] * a + (1 - a) * (pr * pr + pi * pi);
+          const l = 0.5 * Math.log((Spp[k] + eps) / (Srr[k] + eps)), lw = Srr[k] / (Srr[k] + 5e-4); raw[k] = (l < lo ? lo : l > hi ? hi : l) * lw;
+        }
+        let sp = 0, sr2 = 0; for (let k = 0; k < K; k++) { sp += Spp[k]; sr2 += Srr[k]; }
+        const cd = (this.conf - .1) / .2, depT = this.conf >= 0.2 ? (cd > 1 ? 1 : cd) : (sp > 0.02 * sr2 ? 0.85 : 0); this.dep += (depT - this.dep) * .1; const dep = this.dep;
+        const hor = ((ro + N / 2 + HOP) / HOP) * c.predict, Lpr = this.Lpr, Lsm = this.Lsm, cA = this.cA, cR = this.cR, slA = this.slA, slR = this.slR;
+        for (let k = 0; k < K; k++) {
+          const s = (raw[k > 0 ? k - 1 : 0] + 2 * raw[k] + raw[k < K - 1 ? k + 1 : K - 1]) * .25;
+          const v = this.vel[k] = this.vel[k] * .6 + (s - this.L1[k]) * .4; this.L1[k] = s;
+          let h = this.Lhi[k]; h += (s - h) * (s > h ? .3 : .004); this.Lhi[k] = h;
+          let d = v * hor * (Srr[k] / (Srr[k] + 2e-3)); d = d > .6 ? .6 : d < -.6 ? -.6 : d;
+          let p = s + d; Lpr[k] = (p < lo ? lo : p > hi ? hi : p) * dep;
+        }
+        for (let k = 0; k < K; k++) {
+          const cur = Lsm[k]; let dl = Lpr[k] - cur;
+          if (dl > 0) { dl *= cA; if (dl > slA) dl = slA; } else { dl *= cR; if (dl < -slR) dl = -slR; }
+          Lsm[k] = cur + dl;
+        }
+        this.ready = true;
+        if (this.sendStats && (++this.hops % 6) === 0) this.stats();
+      }
+      detect() {
+        const f = getFFT(NS), re = f.re, im = f.im, wp = this.wp, Wc = this.Wc, Pb = this.Pb, St = this.St, wl = this.cfg.wl;
+        for (let i = 0; i < NS; i++) { re[i] = this.rr[(wp - NS + i) & RM] * WS[i]; im[i] = 0; }
+        f.fwd(re, im);
+        const thr = 11 - 3 * wl, Pw = this.Pw;
+        for (let k = 0; k < KS; k++) Pw[k] = re[k] * re[k] + im[k] * im[k];
+        for (let k = 0; k < KS; k++) {
+          const P = (Pw[k > 0 ? k - 1 : 0] + 2 * Pw[k] + Pw[k < KS - 1 ? k + 1 : KS - 1]) * .25, b = Pb[k]; let sv = 0;
+          if (wl > 0 && P > 2e-5) { const d = 10 * Math.log10(P / (b + 2e-6)); sv = (d - thr) / 8; sv = sv < 0 ? 0 : sv > 1 ? 1 : sv; }
+          St[k] = sv; Pb[k] = b + (P - b) * (P < b * 0.15 ? 0.6 : 0.08);
+        }
+        const T2 = this.T2; for (let k = 0; k < KS - 1; k++) T2[k] = St[k] < St[k + 1] ? St[k] : St[k + 1]; T2[KS - 1] = 0;
+        let act = 0;
+        for (let k = 0; k < KS; k++) {
+          let t = T2[k]; const l = k > 0 ? T2[k - 1] : 0; if (l > t) t = l;
+          let w = Wc[k] * 0.88; if (t > w) w = t; if (w < 0.02) w = 0; Wc[k] = w; if (w > act) act = w;
+        }
+        this.wlPrev = this.wlAct; this.wlAct = act > 0.05;
+      }
+      design() {
+        const Ls = this.Lsm, Lhi = this.Lhi, W = this.Wf, Wc = this.Wc, Lf = this.Lfin, Srr = this.Srr, dep = this.dep;
+        for (let k = 0; k < K; k++) { const q = k * 0.25, i = q | 0, fr = q - i, w0 = Wc[i], w1 = Wc[i < KS - 1 ? i + 1 : KS - 1]; W[k] = w0 + (w1 - w0) * fr; }
+        let ws = 0, gp = 0, gh = 0;
+        for (let k = 0; k < K; k++) {
+          const p = Ls[k], w = W[k]; let t = Lhi[k] * dep; if (t < 0) t = 0; if (t < p) t = p;
+          const fm = p + (t - p) * w; Lf[k] = fm; const hh = Math.max(Lhi[k] * dep, fm);
+          const sr = Srr[k]; ws += sr; gp += sr * Math.exp(2 * fm); gh += sr * Math.exp(2 * hh);
+        }
+        if (ws > 1e-18) { this.lnGp = 0.5 * Math.log(gp / ws + 1e-20); this.lnGh = 0.5 * Math.log(gh / ws + 1e-20); } else { this.lnGp = 0; this.lnGh = 0; }
+        
+        let peakResonance = 0, minRes = 0, tonalCount = 0;
+        for (let k = 0; k < K; k++) {
+          if (Lf[k] > peakResonance) peakResonance = Lf[k];
+          if (Lf[k] < minRes) minRes = Lf[k];
+          if (Lf[k] > -1.8) tonalCount++;
+        }
+        if ((this.env < 0.25 && (peakResonance > -1.5 || tonalCount > 2)) || (this.loud > 0.55 && minRes < -2.0 && this.growAny)) {
+          this.feedbackHoldTimer = 30;
+        }
+        if (this.feedbackHoldTimer > 0) {
+          this.feedbackHoldTimer--;
+          this.lnGp = Math.min(this.lnGp, -2.2);
+        }
+
+        const memAtk = this.loud > 0.5 ? 0.75 : 0.55;
+        const memRel = 0.12;
+        for (let k = 0; k < K; k++) {
+          const mm = this.maskMemoryBuf[k], tg = Lf[k];
+          let next = mm + (tg - mm) * (tg < mm ? memAtk : memRel);
+          if (next < -2.8) next = -2.8;
+          this.maskMemoryBuf[k] = next;
+        }
+
+        const g = getFFT(ND), dr = g.re, di = g.im;
+        const firBoost = 1.05;
+        for (let j = 0; j < KD; j++) {
+          const v = ((this.maskMemoryBuf[j ? 2 * j - 1 : 0] + 2 * this.maskMemoryBuf[2 * j] + this.maskMemoryBuf[2 * j + 1 < K ? 2 * j + 1 : K - 1]) * .25 - this.lnGp) * firBoost;
+          dr[j] = v; if (j > 0 && j < ND / 2) dr[ND - j] = v;
+        }
+        di.fill(0); g.inv(dr, di);
+        for (let n = 1; n < ND / 2; n++) dr[n] *= 2; for (let n = ND / 2 + 1; n < ND; n++) dr[n] = 0; di.fill(0);
+        g.fwd(dr, di);
+        for (let n = 0; n < ND; n++) { const m = Math.exp(dr[n]), ph = di[n]; dr[n] = m * Math.cos(ph); di[n] = m * Math.sin(ph); }
+        g.inv(dr, di);
+        const tp = L * 3 / 4 | 0;
+        for (let n = 0; n < L; n++) { const t = n < tp ? 1 : 0.5 + 0.5 * Math.cos(Math.PI * (n - tp) / (L - tp)); this.ht[L - 1 - n] = dr[n] * t; }
+        this.Lap = Lf;
+      }
+      stats() {
+        const df = sampleRate / N, ni = new Float32Array(NB), nc = new Float32Array(NB), nr = new Float32Array(NB);
+        const f0 = 30, f1 = Math.min(32000, sampleRate / 2 - 100), sc = 2 / (N / 2), db = x => { const v = (20 * Math.log10(x * sc + 1e-9) + 96) / 90; return v < 0 ? 0 : v > 1 ? 1 : v; };
+        for (let i = 0; i < NB; i++) {
+          const fa = f0 * Math.pow(f1 / f0, i / NB), fb = f0 * Math.pow(f1 / f0, (i + 1) / NB);
+          const ka = Math.min(K - 1, Math.floor(fa / df)), kb = Math.min(K - 1, Math.max(ka, Math.floor(fb / df)));
+          let pi = 0, pc = 0, pr = 0;
+          for (let k = ka; k <= kb; k++) {
+            const s = this.Srr[k], m2 = Math.exp(2 * (this.bl > 0.5 ? this.Lb[Math.round(k * (this.PK - 1) / (K - 1))] : this.Lap[k]));
+            if (s > pi) pi = s; if (s * m2 > pc) pc = s * m2;
+            const r = s * Math.max(0, 1 - m2); if (r > pr) pr = r;
+          }
+          ni[i] = db(Math.sqrt(pi)); nc[i] = db(Math.sqrt(pc)); nr[i] = db(Math.sqrt(pr));
+        }
+        this.port.postMessage({ type: 'stats', inputSpec: ni, cleanSpec: nc, feedbackSpec: nr, learning: this.gLearning, open: this.fgHold > 0, noise: this.fgNoiseCnt >= 20 });
+      }
+      estLag() {
+        const f = getFFT(LN), re = f.re, im = f.im, xr = f.xr, xi = f.xi, wp = this.wp;
+        for (let i = 0; i < LN; i++) { const w = WLN[i]; re[i] = this.rr[(wp - LN + i) & RM] * w; im[i] = this.pp[(wp - LN + i) & RM] * w; }
+        let en = 0; for (let i = 0; i < LN; i++) en += re[i] * re[i];
+        if (en / LN < 1e-10) { this.nextLag = this.qn + 40; return; }
+        f.fwd(re, im);
+        const k0 = Math.floor(100 / sampleRate * LN), k1 = Math.floor(10000 / sampleRate * LN);
+        for (let k = 0; k < LN; k++) {
+          const kn = (LN - k) & (LN - 1), m = k < LN - k ? k : LN - k;
+          if (m < k0 || m > k1) { xr[k] = 0; xi[k] = 0; continue; }
+          const Rr = (re[k] + re[kn]) * .5, Ri = (im[k] - im[kn]) * .5, Pr = (im[k] + im[kn]) * .5, Pi = (re[kn] - re[k]) * .5;
+          const a = Rr * Pr + Ri * Pi, b = Ri * Pr - Rr * Pi, mg = Math.hypot(a, b) + 1e-12; xr[k] = a / mg; xi[k] = b / mg;
+        }
+        for (let k = 0; k < LN; k++) { re[k] = xr[k]; im[k] = xi[k]; }
+        f.inv(re, im);
+        let best = -1e9, bt = 0, sq = 0;
+        for (let t = -DMAX; t <= DMAX; t++) { const v = re[(LN - t) & (LN - 1)]; if (v > best) { best = v; bt = t; } sq += v * v; }
+        let near = 0; for (let t = bt - 8; t <= bt + 8; t++) { const v = re[(LN - t) & (LN - 1)]; near += v * v; }
+        const rms = Math.sqrt(Math.max(1e-20, (sq - near) / (2 * DMAX + 1 - 17))), psr = best / rms, cf = Math.max(0, Math.min(1, (psr - 4) / 7));
+        if (cf > 0.12) {
+          if (Math.abs(bt - this.cand) <= 4) this.cn++; else { this.cand = bt; this.cn = 1; }
+          if (this.cn >= 2 || this.conf < 0.2) {
+            if (Math.abs(bt - this.lag) > 2 || this.conf < 0.2) { this.lag = bt; this.port.postMessage({ type: 'lag', ms: bt / sampleRate * 1000, conf: cf }); }
+            this.conf = Math.max(this.conf * 0.97, cf, 0.3);
+          }
+        }
+        else this.conf *= 0.97;
+        this.nextLag = this.qn + (this.conf < 0.2 ? 25 : 300);
+      }
+      process(inputs, outputs) {
+        let sh = this.shed; if (this.heavyCool > 0) { this.heavyCool--; if (sh < 3) sh = 3; }
+        this.shedEff = sh; this.frz = sh >= 3 ? (this.frz < 100 ? this.frz + 1 : 100) : 0; const fz = this.frz > 40;
+        const tStart = Date.now(), inp = inputs[0], rawIn = inputs[1], out = outputs[0];
+        if (!inp.length || !out.length || !inp[0]) return true;
+        const x0 = inp[0], hasRaw = !!(rawIn && rawIn.length && rawIn[0]), r0 = hasRaw ? rawIn[0] : x0, y = out[0], n = x0.length, c = this.cfg, pr = this.pb;
+
+        if (!this.xT || this.xT.length !== n) { this.xT = new Float32Array(n); this.rT = new Float32Array(n); }
+        const trim = c.inputTrim, x = this.xT, r_in = hasRaw ? this.rT : x;
+        for (let i = 0; i < n; i++) { x[i] = x0[i] * trim; if (hasRaw) r_in[i] = r0[i] * trim; }
+        if (pr.length < n) this.pb = new Float32Array(n);
+        if (!hasRaw) { this.lag = 0; this.conf = 1; }
+        
+        if (this.rcB.length < n) this.rcB = new Float32Array(n);
+        if (!this.rClean || this.rClean.length !== n) this.rClean = new Float32Array(n);
+        const r_clean = this.rClean;
+        for (let i = 0; i < n; i++) {
+          const rawc = r_in[i] > 1 ? 1 : r_in[i] < -1 ? -1 : r_in[i]; 
+          
+          this.zeroLatencyPassState = this.zeroLatencyPassState * 0.9 + rawc * 0.1;
+          const shapedRaw = rawc - this.zeroLatencyPassState * 0.05;
+
+          r_clean[i] = shapedRaw; 
+          this.rcB[i] = shapedRaw; 
+          this.rw[(this.wp + i) & RM] = shapedRaw;
+
+          const dry = x[i]; 
+          let sample = dry; 
+          const a = Math.abs(sample);
+          if (a > this.env) this.env = this.env * 0.99 + a * 0.01; else this.env = this.env * 0.9999 + a * 0.0001;
+          const close = this.env > 0.4, aHP = close ? 0.92 : 0.96;
+          const hpS = sample - this.hp + aHP * this.hpo; this.hp = sample; this.hpo = hpS;
+          sample = dry * (1.0 - (close ? 0.25 : 0.0)) + hpS * (close ? 0.25 : 0.0);
+          
+          let pv = sample * this.sg * c.overallGainLinear; 
+          pv = pv > 1 ? 1 : pv < -1 ? -1 : pv; 
+          this.pb[i] = pv;
+          
+          const ix = (this.wp + i) & RM; 
+          this.rr[ix] = r_clean[i]; 
+          this.pp[ix] = pv;
+        }
+
+        this.wp = (this.wp + n) & RM; this.filled = Math.min(RB, this.filled + n); this.qn++;
+        let pw = 0; for (let i = 0; i < n; i++) pw += r_clean[i] * r_clean[i]; pw /= n;
+        let ref = 0; for (let k = 1; k <= 6; k++) ref += this.qp[(this.qi - k) & 7]; ref /= 6; this.qp[this.qi & 7] = pw; this.qi++;
+        const db = 10 * Math.log10((pw + 1e-10) / (ref + 1e-10)), sv = pw < 1e-7 ? 0 : Math.max(0, Math.min(1, (db - 3) / 9));
+        this.sw = Math.max(sv, this.sw * 0.75);
+        if (sh < 1 && hasRaw && this.qn >= this.nextLag && this.filled >= LN + DMAX + 64) this.estLag();
+        if (sh < 3 && this.filled >= N + DMAX + 64 && ((this.qn + this.idx) & (sh >= 2 ? 3 : 1)) === 0) { this.analyze(); this.needD = true; }
+        if (sh >= 3) { this.wlAct = false; this.wlPrev = false; } else if (this.filled >= NS && (sh < 2 || ((this.qn + this.idx) & 1) === 0)) this.detect();
+        if (this.ready && (this.needD || this.wlAct || this.wlPrev)) { this.design(); this.needD = false; }
+        if (!this.hist || this.hist.length !== L - 1 + n) this.hist = new Float32Array(L - 1 + n);
+        const H = this.hist, hs = this.hs, ht = this.ht;
+        const csl = this.wlAct ? 0.55 : Math.min(0.35, this.coefSlew);
+        for (let j = 0; j < L; j++) hs[j] += (ht[j] - hs[j]) * csl;
+        
+        H.copyWithin(0, n, L - 1 + n); H.set(r_clean.length === n ? r_clean : r_clean.subarray(0, n), L - 1);
+        
+        if (!this.HR || this.HR.length !== LB - 1 + n) { this.HR = new Float32Array(LB - 1 + n); this.HO = new Float32Array(LA - 1 + n); this.HD = new Float32Array(LD - 1 + n); this.HD2 = new Float32Array(LD - 1 + n); }
+        const HR = this.HR, HO = this.HO, ha = this.haS, hb = this.hbS, haT = this.haT, hbT = this.hbT;
+        for (let j = 0; j < LA; j++) ha[j] += (haT[j] - ha[j]) * 0.25;
+        const hbO = this.hbO, hbD = this.hbD;
+        for (let j = 0; j < LB; j++) { hbO[j] = hb[j]; hb[j] += (hbT[j] - hb[j]) * 0.25; hbD[j] = hb[j] - hbO[j]; }
+        const HD = this.HD, dnS = this.dnS, dnT = this.dnT, dnO = this.dnO, dnD = this.dnD;
+        for (let j = 0; j < LD; j++) { dnO[j] = dnS[j]; dnS[j] += (dnT[j] - dnS[j]) * 0.25; dnD[j] = dnS[j] - dnO[j]; }
+        HD.copyWithin(0, n, LD - 1 + n);
+        const HD2 = this.HD2; HD2.copyWithin(0, n, LD - 1 + n);
+        HR.copyWithin(0, n, LB - 1 + n); HR.set(this.rcB.subarray(0, n), LB - 1);
+        HO.copyWithin(0, n, LA - 1 + n);
+        if (!this.GH || this.GH.length !== LG - 1 + n) this.GH = new Float32Array(LG - 1 + n);
+        const GH = this.GH; GH.copyWithin(0, n, LG - 1 + n);
+        const wb = this.wp - n;
+        let gT = Math.exp(this.lnGp + this.sw * Math.max(0, this.lnGh - this.lnGp));
+        if (this.feedbackHoldTimer > 0) {
+          gT = Math.min(gT, 0.25);
+        }
+
+        const ga = this.gAtk, gr = this.gRel, bt = c.blend;
+        let g = this.g, bl = this.bl, bad = false;
+        let blkE = 0, blkPk = 0; const gF = this.gFirS, gFO = this.gFirO, gFD = this.gFirD, gFT = this.gFirT;
+        for (let j = 0; j < LG; j++) { gFO[j] = gF[j]; gF[j] += (gFT[j] - gF[j]) * 0.3; gFD[j] = gF[j] - gFO[j]; }
+
+        let gateT = 1;
+        if (this.fgEnabled && sh < 3) {
+          if (this.fgVocal || this.voiced > 0.4) {
+            gateT = 1;
+          } else if (this.fbLeak) {
+            gateT = 0.1;
+          } else if (this.fgHold > 0) {
+            gateT = 1;
+          } else if (this.sigPresent || this.voiced > 0.2 || this.gateLvl > this.gateThresh * 3 || this.hfHold > 0 || this.onHold > 0) {
+            gateT = 1;   // any signal present (incl. sustained instruments / phrase tails) -> fully open
+          } else if (this.fgNoiseCnt >= 24 || this.ambientNow) {
+            gateT = 0.45;   // was 0.2: confirmed noise only, gentle attenuation
+          } else {
+            gateT = 0.8;    // was 0.6
+          }
+        }
+        if (this._gateSmooth === undefined) this._gateSmooth = 1;
+        const gateSmoothCoef = gateT > this._gateSmooth ? 0.7 : (this.fbLeak ? 0.5 : 0.04);
+        this._gateSmooth += (gateT - this._gateSmooth) * gateSmoothCoef;
+        // Fader moves (cut AND recovery) are only APPLIED while the gate is closed, so they are never heard mid-phrase.
+        // lgT stays the fader-ride's target; lgA is what is actually applied. Safety valve: ~2.5 s of continuous feedback overrides the wait.
+        {
+          const phraseOn = this.fgHold > 0 || this.fgVocal || this.voiced > 0.3 || this.hfHold > 0 || this.onHold > 0 || this.sigPresent;
+          const runaway = this.frAcc >= 2.5;
+          if (!phraseOn || runaway) this.lgA += (this.lgT - this.lgA) * (runaway ? 0.15 : 0.05);
+        }
+        let lgTarget = this.lgA;
+        if (lgTarget > 1) lgTarget = 1;
+        if (lgTarget < this.frMin) lgTarget = this.frMin;
+        const combinedT = this._gateSmooth * lgTarget;
+        this._g0 = (this._gEnd !== undefined) ? this._gEnd : combinedT;
+        this._g1 = combinedT;
+        this._gEnd = combinedT;
+        this.fg = combinedT;
+
+        for (let i = 0; i < n; i++) {
+          let s = 0; if (!(sh >= 3 && bl > 0.99)) for (let j = 0; j < L; j++) s += hs[j] * H[i + j];
+          g += (gT - g) * (gT > g ? ga : gr); bl += (bt - bl) * .002;
+          let m = s * g; const op = m; 
+          let o = m * bl + x[i] * (1 - bl);
+          
+          const absO = o < 0 ? -o : o;
+          this.gateLvl = absO > this.gateLvl ? absO : this.gateLvl * this.gateDec;
+
+          if (o !== o) { bad = true; o = 0; }
+          const oc = o > 1 ? 1 : o < -1 ? -1 : o;
+          const opC = op > 1 ? 1 : op < -1 ? -1 : op;
+          
+          HO[LA - 1 + i] = opC; this.oo[(wb + i) & RM] = opC;
+          let sa = 0; if (sh < 3) for (let j = 0; j < LA; j++) sa += ha[j] * HO[i + j];
+          this.aa[(wb + i) & RM] = sa;
+          
+          let s0 = 0, s1 = 0; if (fz) { for (let j = 0; j < LB; j++) s0 += hbO[j] * HR[i + j]; } else for (let j = 0; j < LB; j++) { const v = HR[i + j]; s0 += hbO[j] * v; s1 += hbD[j] * v; }
+          const sb = s0 + s1 * ((i + 1) / n);
+          const sbAbs = sb < 0 ? -sb : sb;
+          if (this.gHold === 0) { if (!this.fbLeak && sbAbs > 0.008 && sbAbs > 2.5 * this.fbEnv) { this.gHold = this.holdHops; if (this.nzReady && !this.tonalDom && this.fgNoiseCnt < 20 && this.fgHold < this.provHops) this.fgHold = this.provHops; } else this.fbEnv = sbAbs > this.fbEnv ? sbAbs : this.fbEnv * 0.9997; }
+          this.oe += (sbAbs - this.oe) * (sbAbs > this.oe ? this.oeA : this.oeR);
+          if (!this.nzReady) this.nf += (this.oe - this.nf) * 0.01; else { if (this.fgHold === 0 && !this.fbLeak && this.oe > 4 * this.nf + 4e-5 && !this.tonalDom && !this.growAny) { this.fgHold = this.provHops; if (this.gHold === 0) this.gHold = this.holdHops; } else if (this.oe < this.nf) this.nf += (this.oe - this.nf) * this.nfD; else if (!this.fgOn) this.nf += (this.oe - this.nf) * this.nfU; }  
+          const gt = this.gHold > 0 ? 1 : (this.fgVocal || this.sigPresent || this.voiced > 0.3 || this.hfHold > 0 || this.onHold > 0 ? 1 : 0.8);
+          this.g1 += (gt - this.g1) * (gt > this.g1 ? this.gAtkB : this.gRelB * 0.25);
+          this.g2 += (this.g1 - this.g2) * 0.25;
+          
+          // Lookahead: detectors/gate analysis see the live signal (sb), the audio that actually gets gained is delayed, so gates open BEFORE the consonant reaches them
+          this.laS[this.laW & 4095] = sb; this.laO[this.laW & 4095] = oc;
+          const laI = (this.laW - this.laD) & 4095, sbD = this.laS[laI], ocD = this.laO[laI]; this.laW++;
+          const ug = sbD * this.g2; HD[LD - 1 + i] = ug;
+          if (gt) { if (this.openAge < this.openLen) this.openAge++; } else this.openAge = 0;
+          this.dnMix += ((sh >= 3 ? 0 : 1) - this.dnMix) * 0.003; let d0 = 0, d1 = 0; if (this.dnMix > 0.002) for (let j = 0; j < LD; j++) { const v = HD[i + j]; d0 += dnO[j] * v; d1 += dnD[j] * v; }
+          const dw = (0.5 - 0.5 * Math.cos(Math.PI * this.openAge / this.openLen)) * this.dnMix;   
+          const dn = ug + ((d0 + d1 * ((i + 1) / n)) - ug) * dw;
+          const yo = dn * bl + ocD * (1 - bl);
+          
+          GH[LG - 1 + i] = yo;
+          if (sh < 3) this.gateStep(sbAbs >= 0 ? sb : 0);
+          let g0 = 0, g1x = 0; if (this.fe > 0.002) for (let j = 0; j < LG; j++) { const v = GH[i + j]; g0 += gFO[j] * v; g1x += gFD[j] * v; }
+          const st = g0 + g1x * ((i + 1) / n);
+          this.fe += ((this.fgEnabled && sh < 3 ? 1 : 0) - this.fe) * 0.003;
+          const mix0 = yo * (1 - this.fe) + st * this.fe;
+          // Second noise-reduction pass, last stage before output (same live denoise curve, applied again; skipped under load)
+          HD2[LD - 1 + i] = mix0;
+          this.dnMix2 += ((sh >= 1 || this.hfHold > 0 || this.onHold > 0 ? 0 : 1) - this.dnMix2) * (this.hfHold > 0 || this.onHold > 0 ? 0.02 : 0.003);
+          let mix = mix0;
+          if (this.dnMix2 > 0.002) { let e0 = 0, e1 = 0; for (let j = 0; j < LD; j++) { const v = HD2[i + j]; e0 += dnO[j] * v; e1 += dnD[j] * v; } mix = mix0 + ((e0 + e1 * ((i + 1) / n)) - mix0) * this.dnMix2; }
+          
+          const rd = this.rcB[i], hr = rd - this.hpRx + 0.985 * this.hpR; this.hpRx = rd; this.hpR = hr;
+          const ho = mix - this.hpOx + 0.985 * this.hpO; this.hpOx = mix; this.hpO = ho;
+          if (this.fgHold > 0 && this.fg > 0.9 && !this.ringAny && !this.tonalDom && ho * ho > 1e-8) { this.lvR += (hr * hr - this.lvR) * this.lvC; this.lvO += (ho * ho - this.lvO) * this.lvC; if (this.lvN < 1e9) this.lvN++; }
+          let ml = mix * this.mk;   // level-matched makeup: processed meat == bypass meat
+          const ma2 = ml < 0 ? -ml : ml; if (ma2 > 0.95) { const e = 0.95 + 0.05 * Math.tanh((ma2 - 0.95) / 0.05); ml = ml < 0 ? -e : e; }
+          const gOut = this._g0 + (this._g1 - this._g0) * ((i + 1) / n);
+          const yv = ml * gOut;
+          blkE += yv * yv; const ay = yv < 0 ? -yv : yv; if (ay > blkPk) blkPk = ay;
+          y[i] = yv;
+        }
+        this.g = g; this.bl = bl;
+        if (sh < 3 && this.filled >= N + 64 && ((this.qn + this.idx) & (sh >= 2 ? 7 : sh >= 1 ? 3 : 1)) === 1) this.post();
+        {
+          { // Meat level match: lvR/lvO only track while voice/instrument is present and no feedback is ringing,
+            // so raw vs processed energy there is the 'meat'. Makeup = bypass level / processed level (undoes input trim too).
+            const trimInv = 1 / Math.max(1e-3, c.inputTrim);
+            if (this.lvN > 4000 && this.lvO > 1e-9 && this.lvR > 1e-9) {
+              let tgt = Math.sqrt(this.lvR / this.lvO) * trimInv;
+              tgt = Math.min(trimInv * 2.5, Math.max(trimInv * 0.8, tgt));
+              this.mk += (tgt - this.mk) * (tgt > this.mk ? 0.02 : 0.04);
+            } else if (this.lvN === 0) { this.mk += (trimInv - this.mk) * 0.02; }
+          }
+          const orms = Math.sqrt(blkE / n);
+          this.oFast += (orms - this.oFast) * 0.4; this.oSlow += (orms - this.oSlow) * 0.02;
+          this.inSlow += (pw - this.inSlow) * 0.05;
+          const lvl = Math.max(this.oSlow, Math.sqrt(this.inSlow)), lt = Math.min(1, Math.max(0, (lvl - 0.08) / 0.25));
+          this.loud += (lt - this.loud) * 0.05;
+          this.crestN = (orms > 0.35 && blkPk < 1.6 * orms) ? Math.min(50, this.crestN + 1) : Math.max(0, this.crestN - 2);
+          const howl = this.growAny || (this.loud > 0.35 && this.ringAny && this.tonalDom) || this.crestN >= 10;
+          { // FADER RIDE (always on, per channel).
+            // Brief feedback leakage is ignored. Only MAJOR, PROLONGED feedback (evidence accumulated over ~0.5 s, or ~0.17 s if extreme) engages it.
+            // Then: cut until gone -> learn SAFE ZONE (just below onset level) -> park there -> only really bad feedback lowers it again.
+            const dt = n / sampleRate, voiceLike = this.voiced > 0.3 || this.fgVocal;
+            // Level is judged on the louder of OUTPUT and INPUT: the v7 filter/mask trims the processed signal, so output alone can sit under the floor while feedback is real.
+            const lev = Math.max(orms, Math.sqrt(pw));
+            const sustained = this.ringAny && this.tonalDom && this.pkFrac > 0.35 && !voiceLike && lev > 0.02;
+            const growing = this.growAny && !voiceLike && lev > 0.02;
+            const rawNow = growing || sustained || howl;
+            if (rawNow) this.frRawHold = 0.15; else this.frRawHold = Math.max(0, this.frRawHold - dt);
+            const raw = rawNow || this.frRawHold > 0;                                  // bridges detector flicker so real feedback keeps accumulating
+            const extreme = (this.growAny && lev > 0.08) || (sustained && lev > 0.2) || this.crestN >= 10 || (orms > 0.7 && this.oFast > this.oSlow * 1.5);
+            if (raw) this.frAcc = Math.min(3, this.frAcc + dt * (extreme ? 3 : 1)); else this.frAcc = Math.max(0, this.frAcc - dt * 1.5);   // brief leakage still bleeds off
+            if (!this.frEp && this.frAcc >= 0.5) {
+              this.frEp = true; this.frStart = this.lgT; this.frXd = false;           // major feedback: fader level in force when it began
+              if (!this.frKnown) { this.frKnown = true; this.frSafe = Math.min(this.frSafe, this.frStart * 0.85); }   // first time: find the safe zone
+            }
+            if (this.frEp) {
+              if (raw) {
+                if (extreme && !this.frXd) { this.frXd = true; this.frSafe = Math.min(this.frSafe, this.frStart * 0.85); } // really bad: safe zone moves lower
+                this.lgT = Math.max(this.frMin, this.lgT * (extreme ? 0.88 : 0.95));
+                this.frQuiet = extreme ? -1.2 : -0.6; this.frState = 2;
+              } else if (this.frAcc < 0.4) this.frEp = false;                         // feedback gone
+            }
+            if (!this.frEp) {
+              this.frQuiet += dt;
+              if (this.lgT < this.frSafe) {                                            // recover to the safe zone (never beyond it)
+                if (this.frQuiet >= 0.25) { this.lgT = Math.min(this.frSafe, this.lgT * 1.122); this.frQuiet = 0; this.frState = 1; }
+              } else this.frState = 0;                                                 // parked / untouched
+            }
+          }
+        }
+        if (bad || !isFinite(g)) { this.initMask(); this.initPost(); this.g = 1; this.lg = 1; this.lgT = 1; this.lgA = 1; this.frSafe = 1; this.frKnown = false; this.frEp = false; this.frAcc = 0; }
+
+        const dtb = Date.now() - tStart; if (dtb >= 3) this.heavyCool = 24; this.cpuDt += dtb; this.cpuQ += (n / sampleRate) * 1000;
+        if ((++this.frameCount % 64) === 0) {
+          const inst = Math.min(100, this.cpuDt / this.cpuQ * 100); this.cpuDt = 0; this.cpuQ = 0;
+          this.smoothedCpuLoad = this.smoothedCpuLoad * 0.7 + inst * 0.3;
+          this.port.postMessage({ type: 'cpu', load: this.smoothedCpuLoad });
+          const fdb = this.lgT > 0.001 ? 20 * Math.log10(this.lgT) : -60;
+          if (Math.abs(fdb - this.frLastDb) > 0.4 || fdb < -0.5 || (this.frState && fdb > -0.1)) { this.frLastDb = fdb; this.port.postMessage({ type: 'fader', db: fdb, ceilDb: 20 * Math.log10(Math.max(1e-3, this.frSafe)), state: this.frState }); if (fdb > -0.1) this.frState = 0; }
+        }
+        return true;
+      }
+    }
+    registerProcessor('mf-processor', MFProcessor);
+    `;
+
+    let audioCtx = null, streamMain = null, srcMain = null;
+    const AC = window.AudioContext;
+    const NB = 96;                    // spectrum bands (must match worklet NB)
+    const OUTPUT_MAKEUP_DB = 0;       // set to +9 to cancel the -9 dB input trim (level-matches processed vs bypass)
+    const WARMUP_MS = 250;            // processed path warms up while bypass keeps playing
+    const XFADE_MS = 12;              // click-free crossfade time
+    const mkLin = Math.pow(10, OUTPUT_MAKEUP_DB / 20);
+    const trimLin = Math.pow(10, defaultConfig.inputTrimDb / 20);
+
+    const $ = id => document.getElementById(id);
+    const log = m => {
+      const d = $('log');
+      const p = document.createElement('div');
+      p.textContent = new Date().toLocaleTimeString() + ' ' + m;
+      d.prepend(p);
+    };
+    const shown = {};
+    function setTxt(id, txt, cls) {
+      const el = $(id); if (!el) return;
+      const key = txt + '|' + (cls || '');
+      if (shown[id] === key) return;
+      shown[id] = key; el.textContent = txt; if (cls !== undefined) el.className = cls;
+    }
+
+    /* ------------------------------------------------------------------
+       Chrome-only gate
+    ------------------------------------------------------------------ */
+    function isRealChrome() {
+      if (navigator.brave) return false;
+      const uad = navigator.userAgentData;
+      if (uad && uad.brands && uad.brands.length) {
+        const names = uad.brands.map(b => b.brand);
+        return names.includes('Google Chrome') && !names.some(n => /Edge|Opera|Brave|Vivaldi|Samsung|Yandex/i.test(n));
+      }
+      const ua = navigator.userAgent;
+      return /Chrome\//.test(ua) && !/Edg\/|EdgA|OPR\/|Opera|Vivaldi|SamsungBrowser|YaBrowser|Brave|CriOS|Firefox/.test(ua) && !!window.chrome;
+    }
+    function blockProblem() {
+      if (!isRealChrome()) return ['Google Chrome required', 'This tool depends on Chrome\u2019s low-latency Web Audio, AudioWorklet and output-device routing. Please open this file in desktop Google Chrome.'];
+      if (!window.isSecureContext || !navigator.mediaDevices || !AC || !window.AudioWorkletNode) return ['Audio engine unavailable', 'Chrome could not provide microphone access or AudioWorklet here. Open the file locally or over HTTPS.'];
+      if (typeof AC.prototype.setSinkId !== 'function') return ['Please update Chrome', 'Output-device routing needs Chrome 110 or newer.'];
+      return null;
+    }
+    const blocked = blockProblem();
+    if (blocked) {
+      document.documentElement.classList.add('blocked');
+      $('blockTitle').textContent = blocked[0];
+      $('blockMsg').textContent = blocked[1];
+    }
+
+    /* ------------------------------------------------------------------
+       State
+    ------------------------------------------------------------------ */
+    let running = false, busy = false, devs = [], enabledMask = [], sel = 0;
+    try { enabledMask = JSON.parse(localStorage.getItem('mf.enabled') || '[]'); } catch (e) {}
+    let hw = {};
+    let faderInfo = [], lagInfo = [], wn = [], gP = [], gB = [], anIn = [], anOut = [], wired = [], tm = [], warmT = [], load = [], loadT = [];
+    let splitRaw = null, splitMain = null, merger = null;
+    let renderCap = null, animId = null, specLatest = null, gateState = null, restartTimer = null, lastHouse = 0, lastUnderLog = 0;
+    let meterIn = [], meterOut = [], meterGr = [];
+    const mShown = {};
+    // Load guard (staged DSP freezing)
+    let guardOn = true; try { guardOn = localStorage.getItem('mf.guard') !== '0'; } catch (e) {}
+    let shedStage = 0, shedCh = [], overSince = 0, calmSince = 0, lastRaise = 0, lastLower = 0, lowerBlockUntil = 0, lastGov = 0, underTimes = [], lastHintBump = 0, hintLevel = 0, startT = [];
+    // hi: shed above this DSP load. Chrome's underrun reports trigger an immediate panic freeze.
+    const GOV = { hi: 0.60, peakAvg: 0.40, overMs: 300, raiseGapMs: 700, panicGapMs: 400, calmMs: 10000, lowerGapMs: 5000 };
+    const HINTS = [defaultConfig.bufSize, 'balanced', 'playback'];            // audio buffer size ladder
+    const STAGE_COST = [0, 1.2, 1.5, 3.0];                                    // load multiplier when stepping back down from stage n
+    const effOn = i => !!enabledMask[i] && !shedCh.includes(i);
+
+    /* ------------------------------------------------------------------
+       Hardware / sample-rate negotiation
+    ------------------------------------------------------------------ */
+    // Ask Chrome what rate the chosen output hardware natively runs at.
+    async function probeOutputRate(outId) {
+      let probe = null;
+      try {
+        const o = { latencyHint: 'interactive' };
+        if (outId) o.sinkId = outId;
+        probe = new AC(o);
+        return probe.sampleRate;
+      } catch (e) { return 0; }
+      finally { if (probe) { try { await probe.close(); } catch (e) {} } }
+    }
+
+    function makeCtx(rate, sinkId) {
+      const combos = [];
+      for (const lat of [HINTS[hintLevel], 'interactive']) {
+        if (rate && sinkId) combos.push({ latencyHint: lat, sampleRate: rate, sinkId });
+        if (rate) combos.push({ latencyHint: lat, sampleRate: rate });
+        if (sinkId) combos.push({ latencyHint: lat, sinkId });
+        combos.push({ latencyHint: lat });
+      }
+      for (const o of combos) { try { return new AC(o); } catch (e) {} }
+      throw new Error('Web Audio is not available in this browser');
+    }
+
+    function micConstraints(isRaw, outRate) {
+      const a = {
+        channelCount: { ideal: 32 },
+        echoCancellation: isRaw ? false : defaultConfig.optAEC,
+        noiseSuppression: isRaw ? false : defaultConfig.optNS,
+        autoGainControl: isRaw ? false : defaultConfig.optAGC
+      };
+      const id = $('selIn').value;
+      if (id) a.deviceId = { exact: id };
+      // Prefer the output hardware's rate, but never force it: the device decides.
+      if (outRate) a.sampleRate = { ideal: outRate };
+      return { audio: a, video: false };
+    }
+
+    async function openStreams(outRate) {
+      rawStream = await navigator.mediaDevices.getUserMedia(micConstraints(true, outRate));
+      // With no AEC/NS/AGC wanted, a second capture is identical to the first. Opening the interface twice
+      // (and Chrome's echo-cancel path) is a main source of clicks, so share one stream.
+      if (!(defaultConfig.optAEC || defaultConfig.optNS || defaultConfig.optAGC)) { streamMain = rawStream; return; }
+      try { streamMain = await navigator.mediaDevices.getUserMedia(micConstraints(false, outRate)); }
+      catch (e) { log('Processed capture unavailable (' + e.message + '); using the raw input for both paths.'); streamMain = rawStream; }
+    }
+
+    function closeStreams() {
+      [streamMain, rawStream].forEach(s => { if (s) s.getTracks().forEach(t => { t.onended = null; t.stop(); }); });
+      try { if (srcMain) srcMain.disconnect(); } catch (e) {}
+      try { if (rawSource) rawSource.disconnect(); } catch (e) {}
+      streamMain = null; rawStream = null; srcMain = null; rawSource = null;
+    }
+
+    function logMicSettings() {
+      const x = streamMain.getAudioTracks()[0].getSettings();
+      const rx = rawStream.getAudioTracks()[0].getSettings();
+      log('Processed path: ' + (x.channelCount || '?') + ' ch, ' + (x.sampleRate || '?') + ' Hz, echoCancel=' + x.echoCancellation + ' noiseSuppress=' + x.noiseSuppression);
+      log('Raw / bypass path: ' + (rx.channelCount || '?') + ' ch, ' + (rx.sampleRate || '?') + ' Hz' + (rx.sampleSize ? ', ' + rx.sampleSize + '-bit' : '') + ', no AEC/NS/AGC');
+    }
+
+    /* ------------------------------------------------------------------
+       Devices
+    ------------------------------------------------------------------ */
+    async function scanDevices(unlock) {
+      if (unlock) {
+        try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach(t => t.stop()); }
+        catch (e) { log('Permission denied: ' + e.message); }
+      }
+      devs = await navigator.mediaDevices.enumerateDevices();
+      const hadIn = $('selIn').value, hadOut = $('selOut').value;
+      const fill = (el, kind, had) => {
+        el.innerHTML = '';
+        devs.filter(d => d.kind === kind).forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.deviceId;
+          o.textContent = d.label || kind;
+          el.appendChild(o);
+        });
+        if (!el.options.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'System default'; el.appendChild(o); }
+        if (had && [...el.options].some(o => o.value === had)) el.value = had;
+      };
+      fill($('selIn'), 'audioinput', hadIn);
+      fill($('selOut'), 'audiooutput', hadOut);
+      if (!hadIn) {
+        const hit = [...$('selIn').options].find(o => /x32|xr18|x-air|m32|wing|behringer|allen|a&h|sq-|qu-|dlive/i.test(o.textContent));
+        if (hit) $('selIn').value = hit.value;
+        matchOut();
+      }
+    }
+
+    function matchOut() {
+      const i = devs.find(d => d.kind === 'audioinput' && d.deviceId === $('selIn').value);
+      const o = i && devs.find(d => d.kind === 'audiooutput' && d.groupId === i.groupId);
+      if (o) $('selOut').value = o.deviceId;
+    }
+
+    /* ------------------------------------------------------------------
+       Channel routing: processed <-> direct bypass
+    ------------------------------------------------------------------ */
+    function ramp(param, target, ms) {
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      try {
+        param.cancelScheduledValues(t);
+        param.setValueAtTime(param.value, t);
+        param.linearRampToValueAtTime(target, t + ms / 1000);
+      } catch (e) {}
+    }
+
+    function applyCh(i, on) {
+      if (!audioCtx || !gP[i]) return;
+      clearTimeout(tm[i]); clearTimeout(warmT[i]);
+      on = !!on && !shedCh.includes(i);
+      if (on) {
+        let warm = 0;
+        if (!wired[i]) { wn[i].connect(gP[i]); wired[i] = true; warm = WARMUP_MS; }
+        const go = () => { ramp(gP[i].gain, mkLin, XFADE_MS); ramp(gB[i].gain, 0, XFADE_MS); };
+        if (warm) warmT[i] = setTimeout(go, warm); else go();   // bypass keeps playing while the DSP warms up
+      } else {
+        ramp(gP[i].gain, 0, XFADE_MS); ramp(gB[i].gain, 1, XFADE_MS);
+        tm[i] = setTimeout(() => {
+          if (!effOn(i) && wired[i]) { try { wn[i].disconnect(); } catch (e) {} wired[i] = false; load[i] = 0; }
+        }, XFADE_MS + 100);
+      }
+    }
+
+    /* ---- Load guard: freezes DSP stages progressively, then bypasses channels, to prevent underruns ----
+       Stage 1: freeze delay tracking, feedback analysis at 1/4 rate
+       Stage 2: + feedback analysis 1/8, mask update 1/4, transient detect 1/2, gate analysis 1/2
+       Stage 3: freeze everything but the fixed feedback filter; gate/denoise fade out, gate fails open
+       Underrun -> jump straight to stage 3. Each channel also self-freezes for ~64 ms after any slow block,
+       and channels are phase-staggered so their heavy work never lands in the same audio block.
+       Then: whole channels move to the direct bypass path, last channel first          */
+    function sendShed() { wn.forEach(w => w.port.postMessage({ type: 'shed', level: shedStage })); }
+    function updateShedUI() {
+      document.querySelectorAll('.strip').forEach((s, i) => { const on = shedCh.includes(i); s.classList.toggle('shed', on); s.title = on ? 'Temporarily bypassed by load guard' : ''; });
+      const parts = [];
+      if (shedStage) parts.push('stage ' + shedStage);
+      if (shedCh.length) parts.push(shedCh.length + ' ch bypassed');
+      setTxt('guardInfo', parts.length ? 'Guard: ' + parts.join(', ') : (guardOn ? '' : 'Guard off'), 'guard' + (parts.length ? ' act' : ''));
+    }
+    function raiseShed(avg, under) {
+      const now = performance.now();
+      const tag = 'DSP ' + (avg * 100).toFixed(0) + '%' + (under > 0 ? ', underrun' : '');
+      if (now - lastLower < 15000) lowerBlockUntil = now + 60000;   // lowering caused overload: stay down for a minute
+      if (shedStage < 3) { shedStage++; sendShed(); log('Load guard: freezing stage ' + shedStage + ' (' + tag + ')'); }
+      else {
+        let pick = -1;
+        for (let i = wn.length - 1; i >= 0; i--) if (effOn(i) && i !== sel) { pick = i; break; }
+        if (pick < 0 && effOn(sel)) pick = sel;
+        if (pick < 0) return;
+        shedCh.push(pick); applyCh(pick, true);
+        log('Load guard: Ch ' + (pick + 1) + ' moved to direct bypass (' + tag + ')');
+      }
+      updateShedUI();
+    }
+    function canLower(avg) {
+      if (performance.now() < lowerBlockUntil) return false;
+      if (shedCh.length) { const act = Math.max(1, wired.filter(Boolean).length); return avg + avg / act < GOV.hi * 0.85; }
+      if (shedStage > 0) return avg * STAGE_COST[shedStage] < GOV.hi * 0.85;     // only step down if the result is predicted safe
+      return false;
+    }
+    function lowerShed() {
+      if (shedCh.length) { const i = shedCh.pop(); applyCh(i, enabledMask[i]); log('Load guard: Ch ' + (i + 1) + ' processing restored'); }
+      else if (shedStage > 0) { shedStage--; sendShed(); log('Load guard: back to stage ' + shedStage); }
+      updateShedUI();
+    }
+    function govern(avg, peak, under) {
+      if (!guardOn || !running) return;
+      const now = performance.now();
+      if (under > 0) {                                   // underrun = clicks happening now: freeze hard, immediately
+        calmSince = 0; overSince = 0;
+        underTimes.push(now); underTimes = underTimes.filter(t => now - t < 10000);
+        if (now - lastRaise > GOV.panicGapMs) {
+          if (shedStage < 3) { const was = shedStage; shedStage = 3; sendShed(); log('Load guard: PANIC freeze, stage ' + was + ' to 3 (underrun)'); updateShedUI(); }
+          else raiseShed(avg, under);
+          lastRaise = now;
+        }
+        if (underTimes.length >= 4 && shedStage >= 3 && hintLevel < HINTS.length - 1 && now - lastHintBump > 15000) {
+          hintLevel++; lastHintBump = now;
+          log('Load guard: still underrunning at maximum freeze, enlarging audio buffer (' + HINTS[hintLevel] + ')');
+          scheduleRestart('larger audio buffer for stability');
+        }
+        return;
+      }
+      const over = avg > GOV.hi || (peak >= 0.95 && avg > GOV.peakAvg);
+      if (over) {
+        calmSince = 0; if (!overSince) overSince = now;
+        if (now - overSince > GOV.overMs && now - lastRaise > GOV.raiseGapMs) { raiseShed(avg, 0); lastRaise = now; overSince = 0; }
+      } else {
+        overSince = 0;
+        if ((shedStage || shedCh.length) && canLower(avg)) {
+          if (!calmSince) calmSince = now;
+          if (now - calmSince > GOV.calmMs && now - lastRaise > GOV.lowerGapMs && now - lastLower > GOV.lowerGapMs) { lowerShed(); lastLower = now; calmSince = now; }
+        } else calmSince = 0;
+      }
+    }
+    function setGuard(on) {
+      guardOn = on;
+      $('btnGuard').textContent = 'Load guard: ' + (on ? 'On' : 'Off');
+      try { localStorage.setItem('mf.guard', on ? '1' : '0'); } catch (e) {}
+      if (!on && running) { shedStage = 0; const old = shedCh.slice(); shedCh = []; sendShed(); old.forEach(i => applyCh(i, enabledMask[i])); }
+      overSince = calmSince = 0;
+      updateShedUI();
+    }
+
+    function showLag() {
+      const el = $('lagInfo');
+      if (!el) return;
+      const info = lagInfo[sel];
+      el.textContent = info ? `• Lag: ${info.ms.toFixed(1)}ms (${(info.conf * 100).toFixed(0)}%)` : '';
+    }
+
+    function buildStrips(count) {
+      const container = $('strips');
+      container.innerHTML = '';
+      $('count').textContent = `(${count} detected)`;
+      for (let i = 0; i < count; i++) {
+        if (enabledMask[i] === undefined) enabledMask[i] = true;
+        const div = document.createElement('div');
+        div.className = `strip ${enabledMask[i] ? 'enabled' : ''} ${i === sel ? 'sel' : ''}`;
+        div.id = `strip-${i}`;
+        div.innerHTML = `
+          <button class="n">Ch ${i + 1}</button>
+          <div class="vm">
+            <div class="t in" title="Input level"><i id="m-in-${i}"></i></div>
+            <div class="t gr" title="Gain reduction"><i id="m-out-${i}"></i></div>
+          </div>
+          <button class="sw" role="switch" aria-label="Process channel ${i + 1}" aria-checked="${enabledMask[i]}"><span></span></button>
+        `;
+        div.querySelector('.n').onclick = () => {
+          wn.forEach((w, j) => w.port.postMessage({ type: 'sel', value: j === i }));
+          sel = i; specLatest = null; gateState = null;
+          document.querySelectorAll('.strip').forEach((s, j) => s.classList.toggle('sel', j === sel));
+          $('selName').textContent = `Ch ${sel + 1}`;
+          showLag();
+        };
+        const sw = div.querySelector('.sw');
+        sw.onclick = () => {
+          enabledMask[i] = !enabledMask[i];
+          sw.setAttribute('aria-checked', enabledMask[i]);
+          div.classList.toggle('enabled', enabledMask[i]);
+          applyCh(i, enabledMask[i]);
+          try { localStorage.setItem('mf.enabled', JSON.stringify(enabledMask)); } catch (e) {}
+        };
+        container.appendChild(div);
+      }
+    }
+
+    /* ------------------------------------------------------------------
+       Analyzers: meters, GR, DSP load, spectrum
+    ------------------------------------------------------------------ */
+    const tdBuf = new Float32Array(2048);
+    function peak(an) {
+      if (!an) return 0;
+      an.getFloatTimeDomainData(tdBuf);
+      let p = 0;
+      for (let i = 0; i < tdBuf.length; i++) { const v = tdBuf[i] < 0 ? -tdBuf[i] : tdBuf[i]; if (v > p) p = v; }
+      return p;
+    }
+    const lvl = v => { if (v <= 0.001) return 0; const db = 20 * Math.log10(v); return db < -60 ? 0 : db > 0 ? 1 : (db + 60) / 60; };
+
+    const specDisp = { inp: new Float32Array(NB), cln: new Float32Array(NB), rem: new Float32Array(NB) };
+    const specTgt = { inp: new Float32Array(NB), cln: new Float32Array(NB), rem: new Float32Array(NB) };
+    const fBuf = new Float32Array(1024);
+
+    function bandsFromAnalyser(an, out) {
+      if (!an) { out.fill(0); return; }
+      an.getFloatFrequencyData(fBuf);
+      const sr = audioCtx.sampleRate, df = sr / an.fftSize, f0 = 30, f1 = Math.min(32000, sr / 2 - 100), nb = fBuf.length;
+      for (let i = 0; i < NB; i++) {
+        const fa = f0 * Math.pow(f1 / f0, i / NB), fb = f0 * Math.pow(f1 / f0, (i + 1) / NB);
+        const ka = Math.min(nb - 1, Math.floor(fa / df)), kb = Math.min(nb - 1, Math.max(ka, Math.floor(fb / df)));
+        let m = -200;
+        for (let k = ka; k <= kb; k++) if (fBuf[k] > m) m = fBuf[k];
+        const v = (m + 6 + 96) / 90;           // analyser dB -> same dBFS scale the worklet uses
+        out[i] = v < 0 ? 0 : v > 1 ? 1 : v;
+      }
+    }
+
+    function drawSpectrum(idleText) {
+      const cv = $('spectrum');
+      const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+      if (!W || !H) return;
+      const pw = Math.round(W * dpr), ph = Math.round(H * dpr);
+      if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const sr = audioCtx ? audioCtx.sampleRate : 48000, f0 = 30, f1 = Math.min(32000, sr / 2 - 100);
+      const padB = 16, plotH = H - padB;
+      ctx.font = '10px ui-monospace, Menlo, monospace';
+      ctx.lineWidth = 1; ctx.strokeStyle = '#2C3045'; ctx.fillStyle = '#8A90AB';
+      for (const db of [-20, -40, -60, -80]) {
+        const y = Math.round(plotH - ((db + 96) / 90) * plotH) + 0.5;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        ctx.fillText(db + '', 4, y - 2);
+      }
+      for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]) {
+        if (f >= f1) continue;
+        const x = Math.round((Math.log(f / f0) / Math.log(f1 / f0)) * W) + 0.5;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, plotH); ctx.stroke();
+        ctx.fillText(f >= 1000 ? (f / 1000) + 'k' : f + '', x + 3, H - 3);
+      }
+      if (idleText) {
+        ctx.fillStyle = '#8A90AB'; ctx.font = '13px ui-sans-serif, system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(idleText, W / 2, plotH / 2); ctx.textAlign = 'left';
+        return;
+      }
+      const path = arr => {
+        ctx.beginPath();
+        for (let i = 0; i < NB; i++) { const x = (i / (NB - 1)) * W, y = plotH - arr[i] * plotH; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+      };
+      ctx.lineJoin = 'round';
+      path(specDisp.inp); ctx.strokeStyle = '#8A90AB'; ctx.lineWidth = 1.25; ctx.stroke();
+      path(specDisp.cln); ctx.lineTo(W, plotH); ctx.lineTo(0, plotH); ctx.closePath(); ctx.fillStyle = 'rgba(140,155,255,0.20)'; ctx.fill();
+      path(specDisp.cln); ctx.strokeStyle = '#8C9BFF'; ctx.lineWidth = 1.6; ctx.stroke();
+      path(specDisp.rem); ctx.strokeStyle = '#FF8F70'; ctx.lineWidth = 1.25; ctx.stroke();
+    }
+
+    function updateSpectrum(now) {
+      const processed = effOn(sel);
+      const fresh = specLatest && now - specLatest.t < 500;
+      if (processed && fresh) {
+        specTgt.inp.set(specLatest.inputSpec); specTgt.cln.set(specLatest.cleanSpec); specTgt.rem.set(specLatest.feedbackSpec);
+      } else {
+        // Bypassed (or worklet idle): analyse the actual signal flowing through the channel
+        bandsFromAnalyser(anIn[sel], specTgt.inp);
+        bandsFromAnalyser(anOut[sel], specTgt.cln);
+        specTgt.rem.fill(0);
+      }
+      for (const k of ['inp', 'cln', 'rem']) {
+        const d = specDisp[k], t = specTgt[k];
+        for (let i = 0; i < NB; i++) d[i] += (t[i] - d[i]) * (t[i] > d[i] ? 0.6 : 0.2);
+      }
+      drawSpectrum();
+    }
+
+    function updateStatusText(now) {
+      if (!effOn(sel)) { setTxt('gateInfo', shedCh.includes(sel) ? '\u2022 Load guard: direct bypass' : '\u2022 Bypass (direct input)', ''); setTxt('learnInfo', '', ''); return; }
+      const fi = faderInfo[sel], fr = fi && now - fi.t < 1500 && fi.db < -0.5;
+      if (gateState && now - gateState.t < 600) {
+        setTxt('gateInfo', gateState.open ? '\u2022 Gate open' : '\u2022 Gate closed', gateState.open ? 'open' : '');
+        if (!fr) setTxt('learnInfo', gateState.learning ? '\u2022 Gate learning' : '\u2022 Learn paused (signal present)', gateState.learning ? 'on' : '');
+      } else { setTxt('gateInfo', '', ''); if (!fr) setTxt('learnInfo', '', ''); }
+      if (fr) setTxt('learnInfo', '\u2022 Fader ' + fi.db.toFixed(1) + ' dB' + (fi.state === 2 ? ' (cutting)' : fi.state === 1 ? ' (returning to safe zone)' : ' (safe zone, parked)'), fi.state === 2 ? '' : 'on');
+    }
+
+    function renderHw() {
+      const el = $('hwInfo');
+      if (!running || !audioCtx) { setTxt('hwInfo', '', 'hw'); return; }
+      const k = r => r ? (r / 1000).toFixed(r % 1000 ? 1 : 0) + ' kHz' : '?';
+      const parts = ['In ' + k(hw.inRate) + (hw.inBits ? ' / ' + hw.inBits + '-bit' : ''), 'Out ' + k(hw.outRate), 'Engine ' + k(audioCtx.sampleRate)];
+      const lat = (audioCtx.baseLatency || 0) + (audioCtx.outputLatency || 0);
+      if (lat) parts.push((lat * 1000).toFixed(1) + ' ms out');
+      if (hintLevel) parts.push('buffer: ' + HINTS[hintLevel]);
+      parts.push('32-bit float');
+      const mismatch = (hw.inRate && hw.outRate && hw.inRate !== hw.outRate) || (hw.outRate && audioCtx.sampleRate !== hw.outRate);
+      setTxt('hwInfo', parts.join(' \u00b7 ') + (mismatch ? ' \u00b7 resampling' : ''), 'hw' + (mismatch ? ' warn' : ''));
+      el.title = 'Channels: ' + hw.ch + '  |  Output routing: ' + hw.outMode + '\nThe engine runs at the input device rate; Chrome converts to the output device format.';
+    }
+
+    function housekeeping(now) {
+      renderHw();
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') audioCtx.resume().catch(() => {});
+      try {
+        const t = rawStream && rawStream.getAudioTracks()[0];
+        const r = t && t.getSettings().sampleRate;
+        if (r && hw.inRate && r !== hw.inRate) scheduleRestart('input sample rate changed to ' + r + ' Hz');
+      } catch (e) {}
+    }
+
+    function meterLoop(now) {
+      if (!running) return;
+      now = now || performance.now();
+      let sumLoad = 0;
+      for (let i = 0; i < wn.length; i++) {
+        const ip = peak(anIn[i]), op = peak(anOut[i]);
+        const li = lvl(ip), lo = lvl(op);
+        meterIn[i] = li > meterIn[i] ? li : Math.max(li, meterIn[i] - 0.03);
+        let grDb = 0;
+        if (effOn(i) && wired[i] && ip > 0.003) { const r = op / ip; grDb = r < 1 ? -20 * Math.log10(Math.max(r, 0.01)) : 0; }
+        const tg = Math.min(1, grDb / 24);
+        meterGr[i] += (tg - meterGr[i]) * (tg > meterGr[i] ? 0.5 : 0.08);
+        const a = $(`m-in-${i}`), b = $(`m-out-${i}`);
+        const va = meterIn[i].toFixed(3), vb = meterGr[i].toFixed(3);
+        if (a && mShown['a' + i] !== va) { mShown['a' + i] = va; a.style.transform = `scaleY(${va})`; }
+        if (b && mShown['b' + i] !== vb) { mShown['b' + i] = vb; b.style.transform = `scaleY(${vb})`; }
+        if (loadT[i] && now - loadT[i] < 800 && wired[i]) sumLoad += load[i];
+      }
+      // DSP meter: whole-render-thread load from Chrome when available, else sum of per-channel timings
+      let dsp = Math.min(100, sumLoad), under = 0;
+      if (renderCap && now - renderCap.t < 1500) { dsp = renderCap.avg * 100; under = renderCap.under; }
+      const fill = $('dsp-fill');
+      fill.style.width = dsp.toFixed(1) + '%';
+      fill.style.background = under > 0 ? 'var(--warm)' : dsp > 85 ? 'var(--warm)' : dsp > 65 ? 'var(--amber)' : 'var(--ok)';
+      setTxt('dsp-val', dsp.toFixed(1) + '%');
+      if (under > 0 && now - lastUnderLog > 5000) { lastUnderLog = now; log('Audio underrun detected (' + (under * 100).toFixed(1) + '% of blocks). Reduce active channels if clicks are audible.'); }
+
+      if (!renderCap && now - lastGov > 250) { lastGov = now; govern(sumLoad / 100, sumLoad / 100, 0); }
+      updateSpectrum(now);
+      updateStatusText(now);
+      if (now - lastHouse > 1000) { lastHouse = now; housekeeping(now); }
+      animId = requestAnimationFrame(meterLoop);
+    }
+
+    /* ------------------------------------------------------------------
+       Engine start / stop / restart
+    ------------------------------------------------------------------ */
+    function setBtn(live, txt) {
+      const b = $('btnStart');
+      b.textContent = txt || (live ? 'Stop' : 'Start');
+      b.classList.toggle('live', !!live);
+    }
+
+    async function checkOutputRate() {
+      if (!running) return;
+      const r = await probeOutputRate(hw.outId);
+      if (r && hw.outRate && r !== hw.outRate) scheduleRestart('output device rate changed to ' + r + ' Hz');
+    }
+
+    async function start() {
+      if (blocked) throw new Error(blocked[0]);
+      const outId = $('selOut').value;
+      const inId = $('selIn').value;
+
+      // 1. Learn the output hardware rate, then open capture preferring that rate
+      const outRate = await probeOutputRate(outId);
+      await openStreams(outRate);
+      logMicSettings();
+
+      const rawTrack = rawStream.getAudioTracks()[0], rs = rawTrack.getSettings();
+      const mainTrack = streamMain.getAudioTracks()[0], ms = mainTrack.getSettings();
+      const inRate = rs.sampleRate || 0;
+      const chCount = Math.max(1, Math.min(32, rs.channelCount || 2));
+      const useMain = (ms.channelCount || 1) >= chCount;
+      if (!useMain) log('Processed capture has fewer channels than the raw capture; using raw audio on all channels.');
+
+      // 2. Engine rate = input hardware rate (no resampling on capture). Chrome converts once to the output device.
+      audioCtx = makeCtx(inRate || outRate, outId);
+      if (outId && typeof audioCtx.setSinkId === 'function' && audioCtx.sinkId !== outId) {
+        try { await audioCtx.setSinkId(outId); } catch (e) { log('Output sink error: ' + e.message); }
+      }
+      if (audioCtx.state !== 'running') await audioCtx.resume();
+
+      hw = { inRate: inRate || audioCtx.sampleRate, outRate: outRate || audioCtx.sampleRate, inBits: rs.sampleSize || 0, ch: chCount, inId, outId, outMode: 'stereo' };
+      if (hw.inRate === hw.outRate && audioCtx.sampleRate === hw.inRate) log('Sample rates matched at ' + hw.inRate + ' Hz: no resampling.');
+      else log('Rate mismatch: input ' + hw.inRate + ' Hz, output ' + hw.outRate + ' Hz, engine ' + audioCtx.sampleRate + ' Hz. Chrome will resample once at the output.');
+      log('Processing is 32-bit float internally; Chrome converts to the output device bit depth.');
+
+      // 3. Worklet
+      const blob = new Blob([workletCode], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+      try { await audioCtx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+
+      srcMain = audioCtx.createMediaStreamSource(streamMain);
+      rawSource = audioCtx.createMediaStreamSource(rawStream);
+      splitRaw = audioCtx.createChannelSplitter(chCount);
+      splitMain = audioCtx.createChannelSplitter(chCount);
+      rawSource.connect(splitRaw);
+      srcMain.connect(splitMain);
+      const dry = useMain ? splitMain : splitRaw;
+
+      // 4. Output bus: 1:1 channel return when the device has enough channels
+      const dest = audioCtx.destination;
+      let toOut = g => g.connect(dest);
+      merger = null;
+      if (chCount >= 2 && dest.maxChannelCount >= chCount) {
+        try {
+          dest.channelCount = chCount; dest.channelCountMode = 'explicit'; dest.channelInterpretation = 'discrete';
+          merger = audioCtx.createChannelMerger(chCount); merger.connect(dest);
+          toOut = (g, i) => g.connect(merger, 0, i);
+          hw.outMode = chCount + ' ch, 1:1';
+        } catch (e) { merger = null; toOut = g => g.connect(dest); }
+      } else if (chCount > 2) {
+        hw.outMode = 'summed (output has ' + dest.maxChannelCount + ' ch)';
+        log('Output device has only ' + dest.maxChannelCount + ' channels; channels are summed to the output.');
+      }
+
+      if (sel >= chCount) sel = 0;
+      buildStrips(chCount);
+      $('selName').textContent = `Ch ${sel + 1}`;
+      wn = []; gP = []; gB = []; anIn = []; anOut = []; wired = []; tm = []; warmT = []; load = []; loadT = []; lagInfo = []; faderInfo = [];
+      meterIn = new Array(chCount).fill(0); meterOut = new Array(chCount).fill(0); meterGr = new Array(chCount).fill(0);
+      specLatest = null; gateState = null;
+      shedStage = 0; shedCh = []; overSince = calmSince = 0; lastRaise = performance.now(); lastLower = 0; lowerBlockUntil = 0; underTimes = [];
+      let lc = null, lcn = 0;
+
+      for (let i = 0; i < chCount; i++) {
+        const proc = new AudioWorkletNode(audioCtx, 'mf-processor', {
+          numberOfInputs: 2, numberOfOutputs: 1, outputChannelCount: [1], processorOptions: { index: i }
+        });
+        proc.port.onmessage = e => {
+          const d = e.data, t = performance.now();
+          if (d.type === 'cpu') { load[i] = d.load; loadT[i] = t; }
+          else if (d.type === 'stats') {
+            if (i !== sel) return;
+            specLatest = { inputSpec: d.inputSpec, cleanSpec: d.cleanSpec, feedbackSpec: d.feedbackSpec, t };
+            if (d.learning === lc) lcn++; else { lc = d.learning; lcn = 0; }
+            const prev = gateState ? gateState.learning : d.learning;
+            gateState = { open: d.open, learning: (lcn >= 2 || !gateState) ? d.learning : prev, t };
+          } else if (d.type === 'fader') { faderInfo[i] = { db: d.db, ceilDb: d.ceilDb, state: d.state, t }; }
+          else if (d.type === 'lag') { lagInfo[i] = { ms: d.ms, conf: d.conf }; if (i === sel) showLag(); }
+        };
+        proc.port.postMessage({ type: 'config', ...defaultConfig });  // every channel has its own gate, per-bin gains and fader
+        if (i === sel) proc.port.postMessage({ type: 'sel', value: true });
+
+        dry.connect(proc, i, 0);          // processed-path dry input
+        splitRaw.connect(proc, i, 1);     // raw reference input
+
+        const aIn = audioCtx.createAnalyser(); aIn.fftSize = 2048; aIn.smoothingTimeConstant = 0.55;
+        const aOut = audioCtx.createAnalyser(); aOut.fftSize = 2048; aOut.smoothingTimeConstant = 0.55;
+        splitRaw.connect(aIn, i);
+
+        const gainP = audioCtx.createGain(); gainP.gain.value = 0;      // processed: silent until warmed up
+        const gainB = audioCtx.createGain(); gainB.gain.value = 1;      // bypass: raw direct, no worklet in path
+        splitRaw.connect(gainB, i);
+        toOut(gainP, i); toOut(gainB, i);
+        gainP.connect(aOut); gainB.connect(aOut);
+
+        wn.push(proc); gP.push(gainP); gB.push(gainB); anIn.push(aIn); anOut.push(aOut);
+        wired.push(false); tm.push(null); warmT.push(null); load.push(0); loadT.push(0);
+      }
+      startT.forEach(clearTimeout); startT = []; let k = 0;
+      for (let i = 0; i < chCount; i++) { const d = enabledMask[i] ? 60 * k++ : 0; startT.push(setTimeout(() => applyCh(i, !!enabledMask[i]), d)); }
+
+      // 5. Monitoring: DSP load, underruns, device loss
+      renderCap = null;
+      if (audioCtx.renderCapacity) {
+        try {
+          const rc = audioCtx.renderCapacity;
+          rc.addEventListener('update', e => { renderCap = { avg: e.averageLoad, peak: e.peakLoad, under: e.underrunRatio, t: performance.now() }; govern(e.averageLoad, e.peakLoad, e.underrunRatio); });
+          rc.start({ updateInterval: 0.1 });
+          renderCap = { avg: 0, peak: 0, under: 0, t: performance.now() };
+          audioCtx._rc = rc;
+        } catch (e) { renderCap = null; }
+      }
+      audioCtx.onstatechange = () => { if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {}); };
+      audioCtx.addEventListener('sinkchange', () => { log('Audio output changed.'); checkOutputRate(); });
+      [rawTrack, mainTrack].forEach(t => { t.onended = () => scheduleRestart('input device disconnected'); });
+
+      running = true;
+      updateShedUI();
+      lastHouse = 0;
+      meterLoop();
+    }
+
+    async function stop() {
+      running = false;
+      clearTimeout(restartTimer);
+      if (animId) cancelAnimationFrame(animId);
+      tm.forEach(clearTimeout); warmT.forEach(clearTimeout); startT.forEach(clearTimeout); startT = [];
+      const ctx = audioCtx;
+      if (ctx && ctx._rc) { try { ctx._rc.stop(); } catch (e) {} }
+      renderCap = null;
+      closeStreams();
+      audioCtx = null;
+      if (ctx) { ctx.onstatechange = null; try { await ctx.close(); } catch (e) {} }
+      wn = []; gP = []; gB = []; anIn = []; anOut = []; wired = []; tm = []; warmT = []; load = []; loadT = [];
+      merger = null; splitRaw = null; splitMain = null; specLatest = null; gateState = null;
+      shedStage = 0; shedCh = [];
+      setBtn(false);
+      $('strips').innerHTML = '<p class="empty">Connect your mixer over USB, choose it above, then press Start.</p>';
+      $('count').textContent = '';
+      $('dsp-fill').style.width = '0%'; setTxt('dsp-val', '0.0%');
+      setTxt('hwInfo', '', 'hw'); setTxt('guardInfo', guardOn ? '' : 'Guard off', 'guard'); setTxt('gateInfo', '', ''); setTxt('learnInfo', '', ''); $('lagInfo').textContent = '';
+      specDisp.inp.fill(0); specDisp.cln.fill(0); specDisp.rem.fill(0);
+      drawSpectrum('Press Start to see the live analyzer');
+    }
+
+    async function toggle() {
+      if (busy) return;
+      busy = true;
+      try {
+        if (running) { await stop(); log('Engine stopped.'); }
+        else { setBtn(false, 'Starting...'); await start(); setBtn(true); log('Engine started successfully.'); }
+      } catch (e) {
+        log('Start Error: ' + e.message);
+        await stop();
+      } finally { busy = false; }
+    }
+
+    function scheduleRestart(reason) {
+      if (!running || busy) return;
+      clearTimeout(restartTimer);
+      restartTimer = setTimeout(async () => {
+        if (busy || !running) return;
+        busy = true; log('Restarting engine: ' + reason);
+        try { await stop(); await scanDevices(false); setBtn(false, 'Starting...'); await start(); setBtn(true); log('Engine restarted.'); }
+        catch (e) { log('Restart failed: ' + e.message); await stop(); }
+        finally { busy = false; }
+      }, 300);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (blocked) return;
+      drawSpectrum('Press Start to see the live analyzer');
+      if (window.ResizeObserver) new ResizeObserver(() => { if (!running) drawSpectrum('Press Start to see the live analyzer'); }).observe($('spectrum'));
+
+      $('btnScan').onclick = () => scanDevices(true);
+      $('btnStart').onclick = toggle;
+      $('btnGuard').onclick = () => setGuard(!guardOn);
+      $('btnGuard').textContent = 'Load guard: ' + (guardOn ? 'On' : 'Off');
+      $('selIn').onchange = () => { matchOut(); if (running) scheduleRestart('input device changed'); };
+      $('selOut').onchange = () => { if (running) scheduleRestart('output device changed'); };
+
+      const setAll = on => {
+        enabledMask = enabledMask.map(() => on);
+        document.querySelectorAll('.strip').forEach((s, i) => {
+          s.classList.toggle('enabled', on);
+          s.querySelector('.sw').setAttribute('aria-checked', String(on));
+          if (on) setTimeout(() => applyCh(i, true), i * 50); else applyCh(i, false);
+        });
+        try { localStorage.setItem('mf.enabled', JSON.stringify(enabledMask)); } catch (e) {}
+      };
+      $('btnAll').onclick = () => setAll(true);
+      $('btnNone').onclick = () => setAll(false);
+
+      navigator.mediaDevices.addEventListener('devicechange', async () => {
+        await scanDevices(false);
+        if (!running) return;
+        const gone = (kind, id) => id && !devs.some(d => d.kind === kind && d.deviceId === id);
+        if (gone('audioinput', hw.inId) || gone('audiooutput', hw.outId)) scheduleRestart('audio device removed');
+        else checkOutputRate();
+      });
+
+      scanDevices();
+    });
+  </script>
+</body>
+</html>
